@@ -5,7 +5,7 @@ import (
 	"github.com/jefflinse/terraform-provider-square/square/client"
 )
 
-func resourceSquareCatalogCatagory() *schema.Resource {
+func resourceSquareCatalogCategory() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"name": {
