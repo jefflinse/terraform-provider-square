@@ -20,7 +20,7 @@ resource "square_catalog_item" "test" {
 }
 
 resource "square_catalog_item_variation" "test" {
-  name = "My Terraformed Variation"
+  name = "My Terraformed Item Variation"
   price = 350
   item_id = square_catalog_item.test.id
 }
