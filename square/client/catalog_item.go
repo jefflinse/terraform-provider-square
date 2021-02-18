@@ -44,7 +44,7 @@ func (s *Square) CreateCatalogItem(item *CatalogItem) (*CatalogItem, error) {
 
 	resp, err := s.square.Catalog.BatchUpsertCatalogObjects(params, s.auth())
 	if err != nil {
-		return nil, fmt.Errorf("failed to create Square catalog item: %w", err)
+		return nil, fmt.Errorf("create catalog item: %w", err)
 	}
 
 	return &CatalogItem{
@@ -61,7 +61,7 @@ func (s *Square) RetrieveCatalogItem(id string) (*CatalogItem, error) {
 	params := catalogAPI.NewRetrieveCatalogObjectParams().WithObjectID(id)
 	resp, err := s.square.Catalog.RetrieveCatalogObject(params, s.auth())
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve Square catalog item: %w", err)
+		return nil, fmt.Errorf("retrieve catalog item: %w", err)
 	}
 
 	return &CatalogItem{
@@ -77,7 +77,7 @@ func (s *Square) RetrieveCatalogItem(id string) (*CatalogItem, error) {
 func (s *Square) UpdateCatalogItem(item *CatalogItem) (*CatalogItem, error) {
 	foundItem, err := s.RetrieveCatalogItem(item.ID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to find Square catalog item: %w", err)
+		return nil, fmt.Errorf("update catalog item: %w", err)
 	}
 
 	params := catalogAPI.NewUpsertCatalogObjectParams().WithBody(&squaremodel.UpsertCatalogObjectRequest{
@@ -96,7 +96,7 @@ func (s *Square) UpdateCatalogItem(item *CatalogItem) (*CatalogItem, error) {
 
 	resp, err := s.square.Catalog.UpsertCatalogObject(params, s.auth())
 	if err != nil {
-		return nil, fmt.Errorf("failed to update Square catalog item: %w", err)
+		return nil, fmt.Errorf("update catalog item: %w", err)
 	}
 
 	return &CatalogItem{
@@ -113,7 +113,7 @@ func (s *Square) DeleteCatalogItem(id string) (string, error) {
 	params := catalogAPI.NewDeleteCatalogObjectParams().WithObjectID(id)
 	resp, err := s.square.Catalog.DeleteCatalogObject(params, s.auth())
 	if err != nil {
-		return "", fmt.Errorf("failed to delete Square catalog item: %w", err)
+		return "", fmt.Errorf("delete catalog item: %w", err)
 	}
 
 	return resp.Payload.DeletedObjectIds[0], nil

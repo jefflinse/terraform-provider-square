@@ -34,7 +34,7 @@ func (s *Square) CreateCatalogCategory(name string) (string, error) {
 
 	resp, err := s.square.Catalog.UpsertCatalogObject(params, s.auth())
 	if err != nil {
-		return "", fmt.Errorf("failed to create Square catalog category: %w", err)
+		return "", fmt.Errorf("create catalog category: %w", err)
 	}
 
 	return *resp.Payload.CatalogObject.ID, nil
@@ -45,7 +45,7 @@ func (s *Square) RetrieveCatalogCategory(id string) (*CatalogCategory, error) {
 	params := catalogAPI.NewRetrieveCatalogObjectParams().WithObjectID(id)
 	resp, err := s.square.Catalog.RetrieveCatalogObject(params, s.auth())
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve Square catalog category: %w", err)
+		return nil, fmt.Errorf("retrieve catalog category: %w", err)
 	}
 
 	return &CatalogCategory{
@@ -76,7 +76,7 @@ func (s *Square) UpdateCatalogCategory(id string, name string) (string, error) {
 
 	resp, err := s.square.Catalog.UpsertCatalogObject(params, s.auth())
 	if err != nil {
-		return "", fmt.Errorf("failed to update Square catalog category: %w", err)
+		return "", fmt.Errorf("update catalog category: %w", err)
 	}
 
 	return *resp.Payload.CatalogObject.ID, nil
@@ -87,7 +87,7 @@ func (s *Square) DeleteCatalogCategory(id string) (string, error) {
 	params := catalogAPI.NewDeleteCatalogObjectParams().WithObjectID(id)
 	resp, err := s.square.Catalog.DeleteCatalogObject(params, s.auth())
 	if err != nil {
-		return "", fmt.Errorf("failed to delete Square catalog category: %w", err)
+		return "", fmt.Errorf("delete catalog category: %w", err)
 	}
 
 	return resp.Payload.DeletedObjectIds[0], nil

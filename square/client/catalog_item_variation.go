@@ -42,7 +42,7 @@ func (s *Square) CreateCatalogItemVariation(itemVariation *CatalogItemVariation)
 
 	resp, err := s.square.Catalog.UpsertCatalogObject(params, s.auth())
 	if err != nil {
-		return nil, fmt.Errorf("failed to create Square catalog item variation: %w", err)
+		return nil, fmt.Errorf("create catalog item variation: %w", err)
 	}
 
 	return &CatalogItemVariation{
@@ -60,7 +60,7 @@ func (s *Square) RetrieveCatalogItemVariation(id string) (*CatalogItemVariation,
 	params := catalogAPI.NewRetrieveCatalogObjectParams().WithObjectID(id)
 	resp, err := s.square.Catalog.RetrieveCatalogObject(params, s.auth())
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve Square catalog item variation: %w", err)
+		return nil, fmt.Errorf("retrieve catalog item variation: %w", err)
 	}
 
 	return &CatalogItemVariation{
@@ -77,7 +77,7 @@ func (s *Square) RetrieveCatalogItemVariation(id string) (*CatalogItemVariation,
 func (s *Square) UpdateCatalogItemVariation(itemVariation *CatalogItemVariation) (*CatalogItemVariation, error) {
 	foundItemVariation, err := s.RetrieveCatalogItemVariation(itemVariation.ID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to find Square catalog item variation: %w", err)
+		return nil, fmt.Errorf("update catalog item variation: %w", err)
 	}
 
 	params := catalogAPI.NewUpsertCatalogObjectParams().WithBody(&squaremodel.UpsertCatalogObjectRequest{
@@ -100,7 +100,7 @@ func (s *Square) UpdateCatalogItemVariation(itemVariation *CatalogItemVariation)
 
 	resp, err := s.square.Catalog.UpsertCatalogObject(params, s.auth())
 	if err != nil {
-		return nil, fmt.Errorf("failed to update Square catalog item variation: %w", err)
+		return nil, fmt.Errorf("updpate catalog item variation: %w", err)
 	}
 
 	return &CatalogItemVariation{
@@ -118,7 +118,7 @@ func (s *Square) DeleteCatalogItemVariation(id string) (string, error) {
 	params := catalogAPI.NewDeleteCatalogObjectParams().WithObjectID(id)
 	resp, err := s.square.Catalog.DeleteCatalogObject(params, s.auth())
 	if err != nil {
-		return "", fmt.Errorf("failed to delete Square catalog item variation: %w", err)
+		return "", fmt.Errorf("delete catalog item variation: %w", err)
 	}
 
 	return resp.Payload.DeletedObjectIds[0], nil
