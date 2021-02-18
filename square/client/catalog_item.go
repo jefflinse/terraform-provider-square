@@ -12,10 +12,17 @@ const ItemObjectType = "ITEM"
 
 // CatalogItem is a CatalogObject with type ITEM.
 type CatalogItem struct {
-	ID          string
-	Name        string
-	Description string
-	CategoryID  string
+	ID string
+
+	Abbreviation            string
+	AvailableElectronically bool
+	AvailableOnline         bool
+	AvailableForPickup      bool
+	CategoryID              string
+	Description             string
+	LabelColor              string
+	Name                    string
+	SkipModifierScreen      bool
 
 	version int64
 }
@@ -23,36 +30,43 @@ type CatalogItem struct {
 // CreateCatalogItem creates a new catalog category.
 func (s *Square) CreateCatalogItem(item *CatalogItem) (*CatalogItem, error) {
 	itemID := newTempID()
-	params := catalogAPI.NewBatchUpsertCatalogObjectsParams().WithBody(&squaremodel.BatchUpsertCatalogObjectsRequest{
+	params := catalogAPI.NewUpsertCatalogObjectParams().WithBody(&squaremodel.UpsertCatalogObjectRequest{
 		IdempotencyKey: newIdempotencyKey(),
-		Batches: []*squaremodel.CatalogObjectBatch{
-			{
-				Objects: []*squaremodel.CatalogObject{
-					{
-						ID:   &itemID,
-						Type: strPtr(ItemObjectType),
-						ItemData: &squaremodel.CatalogItem{
-							Name:        item.Name,
-							Description: item.Description,
-							CategoryID:  item.CategoryID,
-						},
-					},
-				},
+		Object: &squaremodel.CatalogObject{
+			ID:   &itemID,
+			Type: strPtr(ItemObjectType),
+			ItemData: &squaremodel.CatalogItem{
+				Abbreviation:            item.Abbreviation,
+				AvailableElectronically: item.AvailableElectronically,
+				AvailableForPickup:      item.AvailableElectronically,
+				AvailableOnline:         item.AvailableOnline,
+				CategoryID:              item.CategoryID,
+				Description:             item.Description,
+				LabelColor:              item.LabelColor,
+				Name:                    item.Name,
+				SkipModifierScreen:      item.SkipModifierScreen,
 			},
 		},
 	})
 
-	resp, err := s.square.Catalog.BatchUpsertCatalogObjects(params, s.auth())
+	resp, err := s.square.Catalog.UpsertCatalogObject(params, s.auth())
 	if err != nil {
 		return nil, fmt.Errorf("create catalog item: %w", err)
 	}
 
 	return &CatalogItem{
-		ID:          *resp.Payload.Objects[0].ID,
-		Name:        resp.Payload.Objects[0].ItemData.Name,
-		Description: resp.Payload.Objects[0].ItemData.Description,
-		CategoryID:  resp.Payload.Objects[0].ItemData.CategoryID,
-		version:     resp.Payload.Objects[0].Version,
+		ID:                      *resp.Payload.CatalogObject.ID,
+		Abbreviation:            resp.Payload.CatalogObject.ItemData.Abbreviation,
+		AvailableElectronically: resp.Payload.CatalogObject.ItemData.AvailableElectronically,
+		AvailableForPickup:      resp.Payload.CatalogObject.ItemData.AvailableElectronically,
+		AvailableOnline:         resp.Payload.CatalogObject.ItemData.AvailableOnline,
+		CategoryID:              resp.Payload.CatalogObject.ItemData.CategoryID,
+		Description:             resp.Payload.CatalogObject.ItemData.Description,
+		LabelColor:              resp.Payload.CatalogObject.ItemData.LabelColor,
+		Name:                    resp.Payload.CatalogObject.ItemData.Name,
+		SkipModifierScreen:      resp.Payload.CatalogObject.ItemData.SkipModifierScreen,
+
+		version: resp.Payload.CatalogObject.Version,
 	}, nil
 }
 

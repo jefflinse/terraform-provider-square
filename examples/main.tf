@@ -14,13 +14,19 @@ resource "square_catalog_category" "test" {
 }
 
 resource "square_catalog_item" "test" {
-  name = "My Terraformed Item"
-  description = "This was made with Terraform!"
-  category_id = square_catalog_category.test.id
+  name                     = "My Terraformed Item"
+  abbreviation             = "TF"
+  available_online         = false
+  available_for_pickup     = false
+  available_electronically = false
+  category_id              = square_catalog_category.test.id
+  description              = "This was made with Terraform!"
+  label_color              = "0000FF"
+  skip_modifier_screen     = false
 }
 
 resource "square_catalog_item_variation" "test" {
   name = "My Terraformed Item Variation"
-  price = 350
   item_id = square_catalog_item.test.id
+  price = 350
 }

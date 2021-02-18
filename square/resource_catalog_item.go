@@ -5,20 +5,48 @@ import (
 	"github.com/jefflinse/terraform-provider-square/square/client"
 )
 
+// CatalogItemAbbreviationMaxLength is the maximum length for a CatalogItem's abbreviation.
+const CatalogItemAbbreviationMaxLength = 24
+
 func resourceSquareCatalogItem() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-			"name": {
+			"abbreviation": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 			},
-			"description": {
-				Type:     schema.TypeString,
+			"available_electronically": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"available_for_pickup": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"available_online": {
+				Type:     schema.TypeBool,
 				Optional: true,
 			},
 			"category_id": {
 				Type:     schema.TypeString,
 				Optional: true,
+			},
+			"description": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"label_color": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"name": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
+			"skip_modifier_screen": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
 			},
 		},
 		Create: resourceSquareCatalogItemCreate,
@@ -30,9 +58,15 @@ func resourceSquareCatalogItem() *schema.Resource {
 
 func resourceSquareCatalogItemCreate(d *schema.ResourceData, meta interface{}) error {
 	item := client.CatalogItem{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		CategoryID:  d.Get("category_id").(string),
+		Abbreviation:            d.Get("abbreviation").(string),
+		AvailableElectronically: d.Get("available_electronically").(bool),
+		AvailableForPickup:      d.Get("available_for_pickup").(bool),
+		AvailableOnline:         d.Get("available_online").(bool),
+		CategoryID:              d.Get("category_id").(string),
+		Description:             d.Get("description").(string),
+		LabelColor:              d.Get("label_color").(string),
+		Name:                    d.Get("name").(string),
+		SkipModifierScreen:      d.Get("skip_modifier_screen").(bool),
 	}
 
 	square := meta.(*client.Square)
@@ -53,9 +87,15 @@ func resourceSquareCatalogItemRead(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 
-	d.Set("name", c.Name)
-	d.Set("description", c.Description)
+	d.Set("abbreviation", c.Abbreviation)
+	d.Set("available_electronically", c.AvailableElectronically)
+	d.Set("available_for_pickup", c.AvailableForPickup)
+	d.Set("available_online", c.AvailableOnline)
 	d.Set("category_id", c.CategoryID)
+	d.Set("description", c.Description)
+	d.Set("label_colorr", c.LabelColor)
+	d.Set("name", c.Name)
+	d.Set("skip_modifier_screen", c.SkipModifierScreen)
 
 	return nil
 }
@@ -64,10 +104,16 @@ func resourceSquareCatalogItemUpdate(d *schema.ResourceData, meta interface{}) e
 	if d.HasChange("name") || d.HasChange("description") || d.HasChange("category_id") {
 		square := meta.(*client.Square)
 		item := client.CatalogItem{
-			ID:          d.Id(),
-			Name:        d.Get("name").(string),
-			Description: d.Get("description").(string),
-			CategoryID:  d.Get("category_id").(string),
+			ID:                      d.Id(),
+			Abbreviation:            d.Get("abbreviation").(string),
+			AvailableElectronically: d.Get("available_electronically").(bool),
+			AvailableForPickup:      d.Get("available_for_pickup").(bool),
+			AvailableOnline:         d.Get("available_online").(bool),
+			CategoryID:              d.Get("category_id").(string),
+			Description:             d.Get("description").(string),
+			LabelColor:              d.Get("label_colorr").(string),
+			Name:                    d.Get("name").(string),
+			SkipModifierScreen:      d.Get("skip_modifier_screen").(bool),
 		}
 		_, err := square.UpdateCatalogItem(&item)
 		if err != nil {
