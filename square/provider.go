@@ -1,6 +1,7 @@
 package square
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -8,24 +9,15 @@ import (
 	"github.com/jefflinse/terraform-provider-square/square/client"
 )
 
+const squarerAPIAccessTokenEnvVar = "SQUARE_API_ACCESS_TOKEN"
+
 // Provider returns the ResourceProvider.
 func Provider() terraform.ResourceProvider {
 	return &schema.Provider{
-		Schema: map[string]*schema.Schema{
-			// "access_token": {
-			// 	Type:        schema.TypeString,
-			// 	Description: "Your Square OAuth Access Token",
-			// 	Required:    true,
-			// 	// DefaultFunc: schema.EnvDefaultFunc("SQUARE_API_ACCESS_TOKEN", nil),
-			// },
-		},
 		ResourcesMap: map[string]*schema.Resource{
 			"square_catalog_category":       resourceSquareCatalogCategory(),
 			"square_catalog_item":           resourceSquareCatalogItem(),
 			"square_catalog_item_variation": resourceSquareCatalogItemVariation(),
-		},
-		DataSourcesMap: map[string]*schema.Resource{
-			// "todoist_project": dataSourceTodoistProject(),
 		},
 		ConfigureFunc: configureFn(),
 	}
@@ -33,8 +25,11 @@ func Provider() terraform.ResourceProvider {
 
 func configureFn() func(*schema.ResourceData) (interface{}, error) {
 	return func(d *schema.ResourceData) (interface{}, error) {
-		// c := client.NewClient(d.Get("access_token").(string))
-		c := client.NewClient(os.Getenv("SQUARE_API_ACCESS_TOKEN"))
-		return c, nil
+		token, ok := os.LookupEnv(squarerAPIAccessTokenEnvVar)
+		if !ok {
+			return nil, fmt.Errorf("%s not set", squarerAPIAccessTokenEnvVar)
+		}
+
+		return client.NewClient(token), nil
 	}
 }
