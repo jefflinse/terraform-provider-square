@@ -18,3 +18,9 @@ resource "square_catalog_item" "test" {
   description = "This was made with Terraform!"
   category_id = square_catalog_category.test.id
 }
+
+resource "square_catalog_item_variation" "test" {
+  name = "My Terraformed Variation"
+  price = 350
+  item_id = square_catalog_item.test.id
+}

@@ -13,9 +13,8 @@ func newIdempotencyKey() *string {
 }
 
 // Generates a new temporary ID used when creating new Square objects.
-func newTempID() *string {
-	id := fmt.Sprintf("#%s", uuid.New().String())
-	return &id
+func newTempID() string {
+	return fmt.Sprint("#", uuid.New().String())
 }
 
 func strPtr(value string) *string {

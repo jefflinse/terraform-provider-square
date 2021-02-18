@@ -20,8 +20,9 @@ func Provider() terraform.ResourceProvider {
 			// },
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"square_catalog_category": resourceSquareCatalogCategory(),
-			"square_catalog_item":     resourceSquareCatalogItem(),
+			"square_catalog_category":       resourceSquareCatalogCategory(),
+			"square_catalog_item":           resourceSquareCatalogItem(),
+			"square_catalog_item_variation": resourceSquareCatalogItemVariation(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			// "todoist_project": dataSourceTodoistProject(),
