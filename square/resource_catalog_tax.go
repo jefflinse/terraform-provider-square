@@ -13,7 +13,7 @@ func resourceSquareCatalogTax() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"applies_to_custom_amounts": {
 				Type:     schema.TypeBool,
-				Optional: true,
+				Computed: true,
 			},
 			"calculation_phase": {
 				Type:     schema.TypeString,
@@ -21,7 +21,7 @@ func resourceSquareCatalogTax() *schema.Resource {
 			},
 			"enabled": {
 				Type:     schema.TypeBool,
-				Optional: true,
+				Computed: true,
 			},
 			"inclusion_type": {
 				Type:     schema.TypeString,
