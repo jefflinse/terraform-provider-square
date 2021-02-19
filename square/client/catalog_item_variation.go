@@ -31,114 +31,90 @@ type CatalogItemVariation struct {
 	version int64
 }
 
-// CreateCatalogItemVariation creates a new catalog category.
-func (s *Square) CreateCatalogItemVariation(itemVariation *CatalogItemVariation) (*CatalogItemVariation, error) {
-	itemID := newTempID()
-	params := catalogAPI.NewUpsertCatalogObjectParams().WithBody(&squaremodel.UpsertCatalogObjectRequest{
-		IdempotencyKey: newIdempotencyKey(),
-		Object: &squaremodel.CatalogObject{
-			ID:   &itemID,
-			Type: strPtr(ItemVariationObjectType),
-			ItemVariationData: &squaremodel.CatalogItemVariation{
-				Name:        itemVariation.Name,
-				ItemID:      itemVariation.ItemID,
-				PricingType: itemVariation.PricingType,
-				Sku:         itemVariation.SKU,
-				Upc:         itemVariation.UPC,
-			},
-		},
-	})
+func itemVariationFromObjectData(obj *squaremodel.CatalogObject) *CatalogItemVariation {
+	iv := &CatalogItemVariation{
+		ID:          *obj.ID,
+		ItemID:      obj.ItemVariationData.ItemID,
+		Name:        obj.ItemVariationData.Name,
+		PricingType: obj.ItemVariationData.PricingType,
+		SKU:         obj.ItemVariationData.Sku,
+		UPC:         obj.ItemVariationData.Upc,
 
-	if itemVariation.PricingType == PricingTypeFixed {
-		params.Body.Object.ItemVariationData.PriceMoney = &squaremodel.Money{
-			Amount:   itemVariation.Price.Amount,
-			Currency: itemVariation.Price.Currency,
+		version: obj.Version,
+	}
+
+	if iv.PricingType == PricingTypeFixed {
+		iv.Price = &Money{
+			Amount:   obj.ItemVariationData.PriceMoney.Amount,
+			Currency: obj.ItemVariationData.PriceMoney.Currency,
 		}
 	}
 
-	resp, err := s.square.Catalog.UpsertCatalogObject(params, s.auth())
+	return iv
+}
+
+func itemVariationDataFromItemVariation(item *CatalogItemVariation) *squaremodel.CatalogItemVariation {
+	iv := &squaremodel.CatalogItemVariation{
+		ItemID:      item.ItemID,
+		Name:        item.Name,
+		PricingType: item.PricingType,
+		Sku:         item.SKU,
+		Upc:         item.UPC,
+	}
+
+	if item.PricingType == PricingTypeFixed {
+		iv.PriceMoney = &squaremodel.Money{
+			Amount:   item.Price.Amount,
+			Currency: item.Price.Currency,
+		}
+	}
+
+	return iv
+}
+
+// CreateCatalogItemVariation creates a new catalog category.
+func (s *Square) CreateCatalogItemVariation(itemVariation *CatalogItemVariation) (*CatalogItemVariation, error) {
+	itemID := newTempID()
+	created, err := s.upsertCatalogObject(&squaremodel.CatalogObject{
+		ID:                &itemID,
+		Type:              strPtr(ItemVariationObjectType),
+		ItemVariationData: itemVariationDataFromItemVariation(itemVariation),
+	})
 	if err != nil {
 		return nil, fmt.Errorf("create catalog item variation: %w", err)
 	}
 
-	return &CatalogItemVariation{
-		ID:   *resp.Payload.CatalogObject.ID,
-		Name: resp.Payload.CatalogObject.ItemVariationData.Name,
-		Price: &Money{
-			Amount:   resp.Payload.CatalogObject.ItemVariationData.PriceMoney.Amount,
-			Currency: resp.Payload.CatalogObject.ItemVariationData.PriceMoney.Currency,
-		},
-		ItemID: resp.Payload.CatalogObject.ItemVariationData.ItemID,
-
-		version: resp.Payload.CatalogObject.Version,
-	}, nil
+	return itemVariationFromObjectData(created), nil
 }
 
 // RetrieveCatalogItemVariation retrieves a catalog item.
 func (s *Square) RetrieveCatalogItemVariation(id string) (*CatalogItemVariation, error) {
-	params := catalogAPI.NewRetrieveCatalogObjectParams().WithObjectID(id)
-	resp, err := s.square.Catalog.RetrieveCatalogObject(params, s.auth())
+	found, err := s.retrieveCatalogObject(id)
 	if err != nil {
 		return nil, fmt.Errorf("retrieve catalog item variation: %w", err)
 	}
 
-	return &CatalogItemVariation{
-		ID:   *resp.Payload.Object.ID,
-		Name: resp.Payload.Object.ItemVariationData.Name,
-		Price: &Money{
-			Amount:   resp.Payload.Object.ItemVariationData.PriceMoney.Amount,
-			Currency: resp.Payload.Object.ItemVariationData.PriceMoney.Currency,
-		},
-		ItemID: resp.Payload.Object.ItemVariationData.ItemID,
-
-		version: resp.Payload.Object.Version,
-	}, nil
+	return itemVariationFromObjectData(found), nil
 }
 
 // UpdateCatalogItemVariation updates a catalog item.
 func (s *Square) UpdateCatalogItemVariation(itemVariation *CatalogItemVariation) (*CatalogItemVariation, error) {
-	foundItemVariation, err := s.RetrieveCatalogItemVariation(itemVariation.ID)
+	found, err := s.RetrieveCatalogItemVariation(itemVariation.ID)
 	if err != nil {
 		return nil, fmt.Errorf("update catalog item variation: %w", err)
 	}
 
-	params := catalogAPI.NewUpsertCatalogObjectParams().WithBody(&squaremodel.UpsertCatalogObjectRequest{
-		IdempotencyKey: newIdempotencyKey(),
-		Object: &squaremodel.CatalogObject{
-			ID:   &foundItemVariation.ID,
-			Type: strPtr(ItemObjectType),
-			ItemVariationData: &squaremodel.CatalogItemVariation{
-				Name:        itemVariation.Name,
-				ItemID:      itemVariation.ItemID,
-				PricingType: itemVariation.PricingType,
-			},
-			Version: foundItemVariation.version,
-		},
+	updated, err := s.upsertCatalogObject(&squaremodel.CatalogObject{
+		ID:                &found.ID,
+		Type:              strPtr(ItemObjectType),
+		ItemVariationData: itemVariationDataFromItemVariation(itemVariation),
+		Version:           found.version,
 	})
-
-	if itemVariation.PricingType == PricingTypeFixed {
-		params.Body.Object.ItemVariationData.PriceMoney = &squaremodel.Money{
-			Amount:   itemVariation.Price.Amount,
-			Currency: itemVariation.Price.Currency,
-		}
-	}
-
-	resp, err := s.square.Catalog.UpsertCatalogObject(params, s.auth())
 	if err != nil {
 		return nil, fmt.Errorf("update catalog item variation: %w", err)
 	}
 
-	return &CatalogItemVariation{
-		ID:   *resp.Payload.CatalogObject.ID,
-		Name: resp.Payload.CatalogObject.ItemVariationData.Name,
-		Price: &Money{
-			Amount:   resp.Payload.CatalogObject.ItemVariationData.PriceMoney.Amount,
-			Currency: resp.Payload.CatalogObject.ItemVariationData.PriceMoney.Currency,
-		},
-		ItemID: resp.Payload.CatalogObject.ItemVariationData.ItemID,
-
-		version: resp.Payload.CatalogObject.Version,
-	}, nil
+	return itemVariationFromObjectData(updated), nil
 }
 
 // DeleteCatalogItemVariation deletes a catalog item.
