@@ -16,6 +16,7 @@ func Provider() terraform.ResourceProvider {
 	return &schema.Provider{
 		ResourcesMap: map[string]*schema.Resource{
 			"square_catalog_category":       resourceSquareCatalogCategory(),
+			"square_catalog_discount":       resourceSquareCatalogDiscount(),
 			"square_catalog_item":           resourceSquareCatalogItem(),
 			"square_catalog_item_variation": resourceSquareCatalogItemVariation(),
 			"square_catalog_tax":            resourceSquareCatalogTax(),

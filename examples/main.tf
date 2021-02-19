@@ -46,3 +46,22 @@ resource "square_catalog_tax" "test" {
 	inclusion_type            = "ADDITIVE"
 	percentage                = "4.2"
 }
+
+resource "square_catalog_discount" "test1" {
+	name                      = "My Terraformed Fixed Discount"
+	type                      = "FIXED_AMOUNT"
+  amount                    = 50
+	currency                  = "USD"
+	label_color               = "FF0000"
+	modify_tax_basis          = "MODIFY_TAX_BASIS"
+	pin_required              = false
+}
+
+resource "square_catalog_discount" "test2" {
+	name                      = "My Terraformed Variable Discount"
+	type                      = "FIXED_PERCENTAGE"
+  percentage                = "10.0"
+	label_color               = "00FF00"
+	modify_tax_basis          = "MODIFY_TAX_BASIS"
+	pin_required              = true
+}
