@@ -3,7 +3,6 @@ package client
 import (
 	"fmt"
 
-	catalogAPI "github.com/jefflinse/square-connect/client/catalog"
 	squaremodel "github.com/jefflinse/square-connect/models"
 )
 
@@ -23,6 +22,7 @@ type CatalogItem struct {
 	LabelColor              string
 	Name                    string
 	SkipModifierScreen      bool
+	TaxIDs                  []string
 
 	version int64
 }
@@ -39,6 +39,7 @@ func itemFromObjectData(obj *squaremodel.CatalogObject) *CatalogItem {
 		LabelColor:              obj.ItemData.LabelColor,
 		Name:                    obj.ItemData.Name,
 		SkipModifierScreen:      obj.ItemData.SkipModifierScreen,
+		TaxIDs:                  obj.ItemData.TaxIds,
 
 		version: obj.Version,
 	}
@@ -55,6 +56,7 @@ func itemDataFromItem(item *CatalogItem) *squaremodel.CatalogItem {
 		LabelColor:              item.LabelColor,
 		Name:                    item.Name,
 		SkipModifierScreen:      item.SkipModifierScreen,
+		TaxIds:                  item.TaxIDs,
 	}
 }
 
@@ -101,15 +103,4 @@ func (s *Square) UpdateCatalogItem(item *CatalogItem) (*CatalogItem, error) {
 	}
 
 	return itemFromObjectData(updated), nil
-}
-
-// DeleteCatalogItem deletes a catalog item.
-func (s *Square) DeleteCatalogItem(id string) (string, error) {
-	params := catalogAPI.NewDeleteCatalogObjectParams().WithObjectID(id)
-	resp, err := s.square.Catalog.DeleteCatalogObject(params, s.auth())
-	if err != nil {
-		return "", fmt.Errorf("delete catalog item: %w", err)
-	}
-
-	return resp.Payload.DeletedObjectIds[0], nil
 }

@@ -59,11 +59,7 @@ func resourceSquareCatalogCategoryUpdate(d *schema.ResourceData, meta interface{
 }
 
 func resourceSquareCatalogCategoryDelete(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*client.Square)
-	_, err := client.DeleteCatalogCategory(d.Id())
-	if err != nil {
-		return err
-	}
-
-	return nil
+	square := meta.(*client.Square)
+	_, err := square.DeleteCatalogObject(d.Id())
+	return err
 }

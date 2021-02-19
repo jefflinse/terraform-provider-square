@@ -3,7 +3,6 @@ package client
 import (
 	"fmt"
 
-	catalogAPI "github.com/jefflinse/square-connect/client/catalog"
 	squaremodel "github.com/jefflinse/square-connect/models"
 )
 
@@ -115,15 +114,4 @@ func (s *Square) UpdateCatalogItemVariation(itemVariation *CatalogItemVariation)
 	}
 
 	return itemVariationFromObjectData(updated), nil
-}
-
-// DeleteCatalogItemVariation deletes a catalog item.
-func (s *Square) DeleteCatalogItemVariation(id string) (string, error) {
-	params := catalogAPI.NewDeleteCatalogObjectParams().WithObjectID(id)
-	resp, err := s.square.Catalog.DeleteCatalogObject(params, s.auth())
-	if err != nil {
-		return "", fmt.Errorf("delete catalog item variation: %w", err)
-	}
-
-	return resp.Payload.DeletedObjectIds[0], nil
 }

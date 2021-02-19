@@ -82,8 +82,8 @@ func resourceSquareCatalogItemVariationRead(d *schema.ResourceData, meta interfa
 	d.Set("item_id", itemVariation.ItemID)
 	d.Set("name", itemVariation.Name)
 	d.Set("pricing_type", itemVariation.PricingType)
-	d.Set("sku", itemVariation.PricingType)
-	d.Set("upc", itemVariation.PricingType)
+	d.Set("sku", itemVariation.SKU)
+	d.Set("upc", itemVariation.UPC)
 
 	if itemVariation.PricingType == client.PricingTypeFixed {
 		d.Set("price_amount", itemVariation.Price.Amount)
@@ -97,10 +97,10 @@ func resourceSquareCatalogItemVariationUpdate(d *schema.ResourceData, meta inter
 	if d.HasChange("item_id") ||
 		d.HasChange("name") ||
 		d.HasChange("pricing_type") ||
-		d.HasChange("sku") ||
-		d.HasChange("upc") ||
 		d.HasChange("price_amount") ||
-		d.HasChange("price_currency") {
+		d.HasChange("price_currency") ||
+		d.HasChange("sku") ||
+		d.HasChange("upc") {
 		square := meta.(*client.Square)
 
 		itemVariation := client.CatalogItemVariation{
@@ -130,10 +130,6 @@ func resourceSquareCatalogItemVariationUpdate(d *schema.ResourceData, meta inter
 
 func resourceSquareCatalogItemVariationDelete(d *schema.ResourceData, meta interface{}) error {
 	square := meta.(*client.Square)
-	_, err := square.DeleteCatalogItemVariation(d.Id())
-	if err != nil {
-		return err
-	}
-
-	return nil
+	_, err := square.DeleteCatalogObject(d.Id())
+	return err
 }

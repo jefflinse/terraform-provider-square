@@ -23,6 +23,9 @@ resource "square_catalog_item" "test" {
   description              = "This was made with Terraform!"
   label_color              = "0000FF"
   skip_modifier_screen     = false
+  tax_ids = [
+    square_catalog_tax.test.id
+  ]
 }
 
 resource "square_catalog_item_variation" "test" {
@@ -33,4 +36,13 @@ resource "square_catalog_item_variation" "test" {
   price_currency = "USD"
   sku            = "B123PINT"
   upc            = ""
+}
+
+resource "square_catalog_tax" "test" {
+	name                      = "My Terraformed Tax"
+  applies_to_custom_amounts = false
+	calculation_phase         = "TAX_TOTAL_PHASE"
+	enabled                   = false
+	inclusion_type            = "ADDITIVE"
+	percentage                = "4.2"
 }

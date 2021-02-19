@@ -48,6 +48,13 @@ func resourceSquareCatalogItem() *schema.Resource {
 				Optional: true,
 				Default:  false,
 			},
+			"tax_ids": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 		Create: resourceSquareCatalogItemCreate,
 		Read:   resourceSquareCatalogItemRead,
@@ -67,6 +74,12 @@ func resourceSquareCatalogItemCreate(d *schema.ResourceData, meta interface{}) e
 		LabelColor:              d.Get("label_color").(string),
 		Name:                    d.Get("name").(string),
 		SkipModifierScreen:      d.Get("skip_modifier_screen").(bool),
+	}
+
+	taxIDs := d.Get("tax_ids").([]interface{})
+	item.TaxIDs = []string{}
+	for _, tid := range taxIDs {
+		item.TaxIDs = append(item.TaxIDs, tid.(string))
 	}
 
 	square := meta.(*client.Square)
@@ -96,12 +109,22 @@ func resourceSquareCatalogItemRead(d *schema.ResourceData, meta interface{}) err
 	d.Set("label_colorr", c.LabelColor)
 	d.Set("name", c.Name)
 	d.Set("skip_modifier_screen", c.SkipModifierScreen)
+	d.Set("tax_ids", c.TaxIDs)
 
 	return nil
 }
 
 func resourceSquareCatalogItemUpdate(d *schema.ResourceData, meta interface{}) error {
-	if d.HasChange("name") || d.HasChange("description") || d.HasChange("category_id") {
+	if d.HasChange("abbreviation") ||
+		d.HasChange("available_electronically") ||
+		d.HasChange("available_for_pickup") ||
+		d.HasChange("available_online") ||
+		d.HasChange("category_id") ||
+		d.HasChange("description") ||
+		d.HasChange("label_colorr") ||
+		d.HasChange("name") ||
+		d.HasChange("skip_modifier_screen") ||
+		d.HasChange("tax_ids") {
 		square := meta.(*client.Square)
 		item := client.CatalogItem{
 			ID:                      d.Id(),
@@ -115,6 +138,13 @@ func resourceSquareCatalogItemUpdate(d *schema.ResourceData, meta interface{}) e
 			Name:                    d.Get("name").(string),
 			SkipModifierScreen:      d.Get("skip_modifier_screen").(bool),
 		}
+
+		taxIDs := d.Get("tax_ids").([]interface{})
+		item.TaxIDs = []string{}
+		for _, tid := range taxIDs {
+			item.TaxIDs = append(item.TaxIDs, tid.(string))
+		}
+
 		_, err := square.UpdateCatalogItem(&item)
 		if err != nil {
 			return err
@@ -126,10 +156,6 @@ func resourceSquareCatalogItemUpdate(d *schema.ResourceData, meta interface{}) e
 
 func resourceSquareCatalogItemDelete(d *schema.ResourceData, meta interface{}) error {
 	square := meta.(*client.Square)
-	_, err := square.DeleteCatalogItem(d.Id())
-	if err != nil {
-		return err
-	}
-
-	return nil
+	_, err := square.DeleteCatalogObject(d.Id())
+	return err
 }

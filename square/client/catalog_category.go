@@ -81,14 +81,3 @@ func (s *Square) UpdateCatalogCategory(id string, name string) (string, error) {
 
 	return *resp.Payload.CatalogObject.ID, nil
 }
-
-// DeleteCatalogCategory deletes a catalog category.
-func (s *Square) DeleteCatalogCategory(id string) (string, error) {
-	params := catalogAPI.NewDeleteCatalogObjectParams().WithObjectID(id)
-	resp, err := s.square.Catalog.DeleteCatalogObject(params, s.auth())
-	if err != nil {
-		return "", fmt.Errorf("delete catalog category: %w", err)
-	}
-
-	return resp.Payload.DeletedObjectIds[0], nil
-}
