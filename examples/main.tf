@@ -40,7 +40,9 @@ resource "square_catalog_item_variation" "test" {
 
 resource "square_catalog_tax" "test" {
 	name                      = "My Terraformed Tax"
+  applies_to_custom_amounts = true
 	calculation_phase         = "TAX_TOTAL_PHASE"
+  enabled                   = true
 	inclusion_type            = "ADDITIVE"
 	percentage                = "4.2"
 }
