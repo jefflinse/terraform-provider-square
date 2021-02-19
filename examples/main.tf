@@ -26,7 +26,11 @@ resource "square_catalog_item" "test" {
 }
 
 resource "square_catalog_item_variation" "test" {
-  name = "My Terraformed Item Variation"
-  item_id = square_catalog_item.test.id
-  price = 350
+  name           = "My Terraformed Item Variation"
+  item_id        = square_catalog_item.test.id
+  pricing_type   = "FIXED_PRICING"
+  price_amount   = 350
+  price_currency = "USD"
+  sku            = "B123PINT"
+  upc            = ""
 }

@@ -7,15 +7,26 @@ import (
 	squaremodel "github.com/jefflinse/square-connect/models"
 )
 
-// ItemVariationObjectType designates an object that describes a CatalogItem.
-const ItemVariationObjectType = "ITEM_VARIATION"
+const (
+	// ItemVariationObjectType designates an object that describes a CatalogItem.
+	ItemVariationObjectType = "ITEM_VARIATION"
+
+	// PricingTypeFixed designated a CatalogItemVariation with fixed pricing.
+	PricingTypeFixed = "FIXED_PRICING"
+
+	// PricingTypeVariable designated a CatalogItemVariation with variable pricing.
+	PricingTypeVariable = "VARIABLE_PRICING"
+)
 
 // CatalogItemVariation is a CatalogObject with type ITEM_VARIATION.
 type CatalogItemVariation struct {
-	ID     string
-	Name   string
-	Price  int64
-	ItemID string
+	ID          string
+	ItemID      string
+	Name        string
+	Price       *Money
+	PricingType string
+	SKU         string
+	UPC         string
 
 	version int64
 }
@@ -29,16 +40,21 @@ func (s *Square) CreateCatalogItemVariation(itemVariation *CatalogItemVariation)
 			ID:   &itemID,
 			Type: strPtr(ItemVariationObjectType),
 			ItemVariationData: &squaremodel.CatalogItemVariation{
-				Name: itemVariation.Name,
-				PriceMoney: &squaremodel.Money{
-					Amount:   int64(itemVariation.Price),
-					Currency: "USD",
-				},
+				Name:        itemVariation.Name,
 				ItemID:      itemVariation.ItemID,
-				PricingType: "FIXED_PRICING",
+				PricingType: itemVariation.PricingType,
+				Sku:         itemVariation.SKU,
+				Upc:         itemVariation.UPC,
 			},
 		},
 	})
+
+	if itemVariation.PricingType == PricingTypeFixed {
+		params.Body.Object.ItemVariationData.PriceMoney = &squaremodel.Money{
+			Amount:   itemVariation.Price.Amount,
+			Currency: itemVariation.Price.Currency,
+		}
+	}
 
 	resp, err := s.square.Catalog.UpsertCatalogObject(params, s.auth())
 	if err != nil {
@@ -46,9 +62,12 @@ func (s *Square) CreateCatalogItemVariation(itemVariation *CatalogItemVariation)
 	}
 
 	return &CatalogItemVariation{
-		ID:     *resp.Payload.CatalogObject.ID,
-		Name:   resp.Payload.CatalogObject.ItemVariationData.Name,
-		Price:  resp.Payload.CatalogObject.ItemVariationData.PriceMoney.Amount,
+		ID:   *resp.Payload.CatalogObject.ID,
+		Name: resp.Payload.CatalogObject.ItemVariationData.Name,
+		Price: &Money{
+			Amount:   resp.Payload.CatalogObject.ItemVariationData.PriceMoney.Amount,
+			Currency: resp.Payload.CatalogObject.ItemVariationData.PriceMoney.Currency,
+		},
 		ItemID: resp.Payload.CatalogObject.ItemVariationData.ItemID,
 
 		version: resp.Payload.CatalogObject.Version,
@@ -64,9 +83,12 @@ func (s *Square) RetrieveCatalogItemVariation(id string) (*CatalogItemVariation,
 	}
 
 	return &CatalogItemVariation{
-		ID:     *resp.Payload.Object.ID,
-		Name:   resp.Payload.Object.ItemVariationData.Name,
-		Price:  resp.Payload.Object.ItemVariationData.PriceMoney.Amount,
+		ID:   *resp.Payload.Object.ID,
+		Name: resp.Payload.Object.ItemVariationData.Name,
+		Price: &Money{
+			Amount:   resp.Payload.Object.ItemVariationData.PriceMoney.Amount,
+			Currency: resp.Payload.Object.ItemVariationData.PriceMoney.Currency,
+		},
 		ItemID: resp.Payload.Object.ItemVariationData.ItemID,
 
 		version: resp.Payload.Object.Version,
@@ -86,27 +108,33 @@ func (s *Square) UpdateCatalogItemVariation(itemVariation *CatalogItemVariation)
 			ID:   &foundItemVariation.ID,
 			Type: strPtr(ItemObjectType),
 			ItemVariationData: &squaremodel.CatalogItemVariation{
-				Name: itemVariation.Name,
-				PriceMoney: &squaremodel.Money{
-					Amount:   itemVariation.Price,
-					Currency: "USD",
-				},
+				Name:        itemVariation.Name,
 				ItemID:      itemVariation.ItemID,
-				PricingType: "FIXED_PRICING",
+				PricingType: itemVariation.PricingType,
 			},
 			Version: foundItemVariation.version,
 		},
 	})
 
+	if itemVariation.PricingType == PricingTypeFixed {
+		params.Body.Object.ItemVariationData.PriceMoney = &squaremodel.Money{
+			Amount:   itemVariation.Price.Amount,
+			Currency: itemVariation.Price.Currency,
+		}
+	}
+
 	resp, err := s.square.Catalog.UpsertCatalogObject(params, s.auth())
 	if err != nil {
-		return nil, fmt.Errorf("updpate catalog item variation: %w", err)
+		return nil, fmt.Errorf("update catalog item variation: %w", err)
 	}
 
 	return &CatalogItemVariation{
-		ID:     *resp.Payload.CatalogObject.ID,
-		Name:   resp.Payload.CatalogObject.ItemVariationData.Name,
-		Price:  resp.Payload.CatalogObject.ItemVariationData.PriceMoney.Amount,
+		ID:   *resp.Payload.CatalogObject.ID,
+		Name: resp.Payload.CatalogObject.ItemVariationData.Name,
+		Price: &Money{
+			Amount:   resp.Payload.CatalogObject.ItemVariationData.PriceMoney.Amount,
+			Currency: resp.Payload.CatalogObject.ItemVariationData.PriceMoney.Currency,
+		},
 		ItemID: resp.Payload.CatalogObject.ItemVariationData.ItemID,
 
 		version: resp.Payload.CatalogObject.Version,

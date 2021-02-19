@@ -8,17 +8,34 @@ import (
 func resourceSquareCatalogItemVariation() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
+			"item_id": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"price": {
+			"price_amount": {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
-			"item_id": {
+			"price_currency": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
+			},
+			"pricing_type": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  client.PricingTypeVariable,
+			},
+			"sku": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"upc": {
+				Type:     schema.TypeString,
+				Optional: true,
 			},
 		},
 		Create: resourceSquareCatalogItemVariationCreate,
@@ -30,9 +47,18 @@ func resourceSquareCatalogItemVariation() *schema.Resource {
 
 func resourceSquareCatalogItemVariationCreate(d *schema.ResourceData, meta interface{}) error {
 	itemVariation := client.CatalogItemVariation{
-		Name:   d.Get("name").(string),
-		Price:  int64(d.Get("price").(int)),
-		ItemID: d.Get("item_id").(string),
+		ItemID:      d.Get("item_id").(string),
+		Name:        d.Get("name").(string),
+		PricingType: d.Get("pricing_type").(string),
+		SKU:         d.Get("sku").(string),
+		UPC:         d.Get("upc").(string),
+	}
+
+	if itemVariation.PricingType == client.PricingTypeFixed {
+		itemVariation.Price = &client.Money{
+			Amount:   int64(d.Get("price_amount").(int)),
+			Currency: d.Get("price_currency").(string),
+		}
 	}
 
 	square := meta.(*client.Square)
@@ -48,27 +74,51 @@ func resourceSquareCatalogItemVariationCreate(d *schema.ResourceData, meta inter
 
 func resourceSquareCatalogItemVariationRead(d *schema.ResourceData, meta interface{}) error {
 	square := meta.(*client.Square)
-	c, err := square.RetrieveCatalogItemVariation(d.Id())
+	itemVariation, err := square.RetrieveCatalogItemVariation(d.Id())
 	if err != nil {
 		return err
 	}
 
-	d.Set("name", c.Name)
-	d.Set("price", c.Price)
-	d.Set("item_id", c.ItemID)
+	d.Set("item_id", itemVariation.ItemID)
+	d.Set("name", itemVariation.Name)
+	d.Set("pricing_type", itemVariation.PricingType)
+	d.Set("sku", itemVariation.PricingType)
+	d.Set("upc", itemVariation.PricingType)
+
+	if itemVariation.PricingType == client.PricingTypeFixed {
+		d.Set("price_amount", itemVariation.Price.Amount)
+		d.Set("price_currency", itemVariation.Price.Currency)
+	}
 
 	return nil
 }
 
 func resourceSquareCatalogItemVariationUpdate(d *schema.ResourceData, meta interface{}) error {
-	if d.HasChange("name") || d.HasChange("price") || d.HasChange("item_id") {
+	if d.HasChange("item_id") ||
+		d.HasChange("name") ||
+		d.HasChange("pricing_type") ||
+		d.HasChange("sku") ||
+		d.HasChange("upc") ||
+		d.HasChange("price_amount") ||
+		d.HasChange("price_currency") {
 		square := meta.(*client.Square)
+
 		itemVariation := client.CatalogItemVariation{
-			ID:     d.Id(),
-			Name:   d.Get("name").(string),
-			Price:  d.Get("price").(int64),
-			ItemID: d.Get("item_id").(string),
+			ID:          d.Id(),
+			ItemID:      d.Get("item_id").(string),
+			Name:        d.Get("name").(string),
+			PricingType: d.Get("pricing_type").(string),
+			SKU:         d.Get("sku").(string),
+			UPC:         d.Get("upc").(string),
 		}
+
+		if itemVariation.PricingType == client.PricingTypeFixed {
+			itemVariation.Price = &client.Money{
+				Amount:   int64(d.Get("price_amount").(int)),
+				Currency: d.Get("price_currency").(string),
+			}
+		}
+
 		_, err := square.UpdateCatalogItemVariation(&itemVariation)
 		if err != nil {
 			return err
