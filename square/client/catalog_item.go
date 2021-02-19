@@ -27,99 +27,80 @@ type CatalogItem struct {
 	version int64
 }
 
+func itemFromObjectData(obj *squaremodel.CatalogObject) *CatalogItem {
+	return &CatalogItem{
+		ID:                      *obj.ID,
+		Abbreviation:            obj.ItemData.Abbreviation,
+		AvailableElectronically: obj.ItemData.AvailableElectronically,
+		AvailableForPickup:      obj.ItemData.AvailableElectronically,
+		AvailableOnline:         obj.ItemData.AvailableOnline,
+		CategoryID:              obj.ItemData.CategoryID,
+		Description:             obj.ItemData.Description,
+		LabelColor:              obj.ItemData.LabelColor,
+		Name:                    obj.ItemData.Name,
+		SkipModifierScreen:      obj.ItemData.SkipModifierScreen,
+
+		version: obj.Version,
+	}
+}
+
+func itemDataFromItem(item *CatalogItem) *squaremodel.CatalogItem {
+	return &squaremodel.CatalogItem{
+		Abbreviation:            item.Abbreviation,
+		AvailableElectronically: item.AvailableElectronically,
+		AvailableForPickup:      item.AvailableElectronically,
+		AvailableOnline:         item.AvailableOnline,
+		CategoryID:              item.CategoryID,
+		Description:             item.Description,
+		LabelColor:              item.LabelColor,
+		Name:                    item.Name,
+		SkipModifierScreen:      item.SkipModifierScreen,
+	}
+}
+
 // CreateCatalogItem creates a new catalog category.
 func (s *Square) CreateCatalogItem(item *CatalogItem) (*CatalogItem, error) {
 	itemID := newTempID()
-	params := catalogAPI.NewUpsertCatalogObjectParams().WithBody(&squaremodel.UpsertCatalogObjectRequest{
-		IdempotencyKey: newIdempotencyKey(),
-		Object: &squaremodel.CatalogObject{
-			ID:   &itemID,
-			Type: strPtr(ItemObjectType),
-			ItemData: &squaremodel.CatalogItem{
-				Abbreviation:            item.Abbreviation,
-				AvailableElectronically: item.AvailableElectronically,
-				AvailableForPickup:      item.AvailableElectronically,
-				AvailableOnline:         item.AvailableOnline,
-				CategoryID:              item.CategoryID,
-				Description:             item.Description,
-				LabelColor:              item.LabelColor,
-				Name:                    item.Name,
-				SkipModifierScreen:      item.SkipModifierScreen,
-			},
-		},
+	created, err := s.upsertCatalogObject(&squaremodel.CatalogObject{
+		ID:       &itemID,
+		Type:     strPtr(ItemObjectType),
+		ItemData: itemDataFromItem(item),
 	})
-
-	resp, err := s.square.Catalog.UpsertCatalogObject(params, s.auth())
 	if err != nil {
 		return nil, fmt.Errorf("create catalog item: %w", err)
 	}
 
-	return &CatalogItem{
-		ID:                      *resp.Payload.CatalogObject.ID,
-		Abbreviation:            resp.Payload.CatalogObject.ItemData.Abbreviation,
-		AvailableElectronically: resp.Payload.CatalogObject.ItemData.AvailableElectronically,
-		AvailableForPickup:      resp.Payload.CatalogObject.ItemData.AvailableElectronically,
-		AvailableOnline:         resp.Payload.CatalogObject.ItemData.AvailableOnline,
-		CategoryID:              resp.Payload.CatalogObject.ItemData.CategoryID,
-		Description:             resp.Payload.CatalogObject.ItemData.Description,
-		LabelColor:              resp.Payload.CatalogObject.ItemData.LabelColor,
-		Name:                    resp.Payload.CatalogObject.ItemData.Name,
-		SkipModifierScreen:      resp.Payload.CatalogObject.ItemData.SkipModifierScreen,
-
-		version: resp.Payload.CatalogObject.Version,
-	}, nil
+	return itemFromObjectData(created), nil
 }
 
 // RetrieveCatalogItem retrieves a catalog item.
 func (s *Square) RetrieveCatalogItem(id string) (*CatalogItem, error) {
-	params := catalogAPI.NewRetrieveCatalogObjectParams().WithObjectID(id)
-	resp, err := s.square.Catalog.RetrieveCatalogObject(params, s.auth())
+	found, err := s.retrieveCatalogObject(id)
 	if err != nil {
 		return nil, fmt.Errorf("retrieve catalog item: %w", err)
 	}
 
-	return &CatalogItem{
-		ID:          *resp.Payload.Object.ID,
-		Name:        resp.Payload.Object.ItemData.Name,
-		Description: resp.Payload.Object.ItemData.Description,
-		CategoryID:  resp.Payload.Object.ItemData.CategoryID,
-		version:     resp.Payload.Object.Version,
-	}, nil
+	return itemFromObjectData(found), nil
 }
 
 // UpdateCatalogItem updates a catalog item.
 func (s *Square) UpdateCatalogItem(item *CatalogItem) (*CatalogItem, error) {
-	foundItem, err := s.RetrieveCatalogItem(item.ID)
+	found, err := s.RetrieveCatalogItem(item.ID)
 	if err != nil {
 		return nil, fmt.Errorf("update catalog item: %w", err)
 	}
 
-	params := catalogAPI.NewUpsertCatalogObjectParams().WithBody(&squaremodel.UpsertCatalogObjectRequest{
-		IdempotencyKey: newIdempotencyKey(),
-		Object: &squaremodel.CatalogObject{
-			ID:   &foundItem.ID,
-			Type: strPtr(ItemObjectType),
-			ItemData: &squaremodel.CatalogItem{
-				Name:        item.Name,
-				Description: item.Description,
-				CategoryID:  item.CategoryID,
-			},
-			Version: foundItem.version,
-		},
+	updated, err := s.upsertCatalogObject(&squaremodel.CatalogObject{
+		ID:       &found.ID,
+		Type:     strPtr(ItemObjectType),
+		ItemData: itemDataFromItem(item),
+		Version:  item.version,
 	})
-
-	resp, err := s.square.Catalog.UpsertCatalogObject(params, s.auth())
 	if err != nil {
 		return nil, fmt.Errorf("update catalog item: %w", err)
 	}
 
-	return &CatalogItem{
-		ID:          *resp.Payload.CatalogObject.ID,
-		Name:        resp.Payload.CatalogObject.ItemData.Name,
-		Description: resp.Payload.CatalogObject.ItemData.Description,
-		CategoryID:  resp.Payload.CatalogObject.ItemData.CategoryID,
-		version:     resp.Payload.CatalogObject.Version,
-	}, nil
+	return itemFromObjectData(updated), nil
 }
 
 // DeleteCatalogItem deletes a catalog item.
