@@ -1,4 +1,4 @@
-package client
+package square
 
 import (
 	"fmt"
@@ -78,9 +78,9 @@ func discountDataFromDiscount(discount *CatalogDiscount) *squaremodel.CatalogDis
 }
 
 // CreateCatalogDiscount creates a new catalog discount.
-func (s *Square) CreateCatalogDiscount(discount *CatalogDiscount) (*CatalogDiscount, error) {
+func (c *Client) CreateCatalogDiscount(discount *CatalogDiscount) (*CatalogDiscount, error) {
 	discountID := newTempID()
-	created, err := s.upsertCatalogObject(&squaremodel.CatalogObject{
+	created, err := c.upsertCatalogObject(&squaremodel.CatalogObject{
 		ID:           &discountID,
 		Type:         strPtr(DiscountObjectType),
 		DiscountData: discountDataFromDiscount(discount),
@@ -93,8 +93,8 @@ func (s *Square) CreateCatalogDiscount(discount *CatalogDiscount) (*CatalogDisco
 }
 
 // RetrieveCatalogDiscount retrieves a catalog discount.
-func (s *Square) RetrieveCatalogDiscount(id string) (*CatalogDiscount, error) {
-	found, err := s.retrieveCatalogObject(id)
+func (c *Client) RetrieveCatalogDiscount(id string) (*CatalogDiscount, error) {
+	found, err := c.retrieveCatalogObject(id)
 	if err != nil {
 		return nil, fmt.Errorf("retrieve catalog discount: %w", err)
 	}
@@ -103,13 +103,13 @@ func (s *Square) RetrieveCatalogDiscount(id string) (*CatalogDiscount, error) {
 }
 
 // UpdateCatalogDiscount updates a catalog discount.
-func (s *Square) UpdateCatalogDiscount(discount *CatalogDiscount) (*CatalogDiscount, error) {
-	found, err := s.RetrieveCatalogDiscount(discount.ID)
+func (c *Client) UpdateCatalogDiscount(discount *CatalogDiscount) (*CatalogDiscount, error) {
+	found, err := c.RetrieveCatalogDiscount(discount.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	updated, err := s.upsertCatalogObject(&squaremodel.CatalogObject{
+	updated, err := c.upsertCatalogObject(&squaremodel.CatalogObject{
 		ID:           &found.ID,
 		Type:         strPtr(DiscountObjectType),
 		DiscountData: discountDataFromDiscount(discount),

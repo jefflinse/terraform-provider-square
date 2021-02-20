@@ -1,4 +1,4 @@
-package client
+package square
 
 import (
 	"fmt"
@@ -71,9 +71,9 @@ func itemVariationDataFromItemVariation(item *CatalogItemVariation) *squaremodel
 }
 
 // CreateCatalogItemVariation creates a new catalog category.
-func (s *Square) CreateCatalogItemVariation(itemVariation *CatalogItemVariation) (*CatalogItemVariation, error) {
+func (c *Client) CreateCatalogItemVariation(itemVariation *CatalogItemVariation) (*CatalogItemVariation, error) {
 	itemID := newTempID()
-	created, err := s.upsertCatalogObject(&squaremodel.CatalogObject{
+	created, err := c.upsertCatalogObject(&squaremodel.CatalogObject{
 		ID:                &itemID,
 		Type:              strPtr(ItemVariationObjectType),
 		ItemVariationData: itemVariationDataFromItemVariation(itemVariation),
@@ -86,8 +86,8 @@ func (s *Square) CreateCatalogItemVariation(itemVariation *CatalogItemVariation)
 }
 
 // RetrieveCatalogItemVariation retrieves a catalog item.
-func (s *Square) RetrieveCatalogItemVariation(id string) (*CatalogItemVariation, error) {
-	found, err := s.retrieveCatalogObject(id)
+func (c *Client) RetrieveCatalogItemVariation(id string) (*CatalogItemVariation, error) {
+	found, err := c.retrieveCatalogObject(id)
 	if err != nil {
 		return nil, fmt.Errorf("retrieve catalog item variation: %w", err)
 	}
@@ -96,13 +96,13 @@ func (s *Square) RetrieveCatalogItemVariation(id string) (*CatalogItemVariation,
 }
 
 // UpdateCatalogItemVariation updates a catalog item.
-func (s *Square) UpdateCatalogItemVariation(itemVariation *CatalogItemVariation) (*CatalogItemVariation, error) {
-	found, err := s.RetrieveCatalogItemVariation(itemVariation.ID)
+func (c *Client) UpdateCatalogItemVariation(itemVariation *CatalogItemVariation) (*CatalogItemVariation, error) {
+	found, err := c.RetrieveCatalogItemVariation(itemVariation.ID)
 	if err != nil {
 		return nil, fmt.Errorf("update catalog item variation: %w", err)
 	}
 
-	updated, err := s.upsertCatalogObject(&squaremodel.CatalogObject{
+	updated, err := c.upsertCatalogObject(&squaremodel.CatalogObject{
 		ID:                &found.ID,
 		Type:              strPtr(ItemObjectType),
 		ItemVariationData: itemVariationDataFromItemVariation(itemVariation),

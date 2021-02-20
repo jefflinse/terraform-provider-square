@@ -1,4 +1,4 @@
-package client
+package square
 
 import (
 	"fmt"
@@ -61,9 +61,9 @@ func itemDataFromItem(item *CatalogItem) *squaremodel.CatalogItem {
 }
 
 // CreateCatalogItem creates a new catalog category.
-func (s *Square) CreateCatalogItem(item *CatalogItem) (*CatalogItem, error) {
+func (c *Client) CreateCatalogItem(item *CatalogItem) (*CatalogItem, error) {
 	itemID := newTempID()
-	created, err := s.upsertCatalogObject(&squaremodel.CatalogObject{
+	created, err := c.upsertCatalogObject(&squaremodel.CatalogObject{
 		ID:       &itemID,
 		Type:     strPtr(ItemObjectType),
 		ItemData: itemDataFromItem(item),
@@ -76,8 +76,8 @@ func (s *Square) CreateCatalogItem(item *CatalogItem) (*CatalogItem, error) {
 }
 
 // RetrieveCatalogItem retrieves a catalog item.
-func (s *Square) RetrieveCatalogItem(id string) (*CatalogItem, error) {
-	found, err := s.retrieveCatalogObject(id)
+func (c *Client) RetrieveCatalogItem(id string) (*CatalogItem, error) {
+	found, err := c.retrieveCatalogObject(id)
 	if err != nil {
 		return nil, fmt.Errorf("retrieve catalog item: %w", err)
 	}
@@ -86,13 +86,13 @@ func (s *Square) RetrieveCatalogItem(id string) (*CatalogItem, error) {
 }
 
 // UpdateCatalogItem updates a catalog item.
-func (s *Square) UpdateCatalogItem(item *CatalogItem) (*CatalogItem, error) {
-	found, err := s.RetrieveCatalogItem(item.ID)
+func (c *Client) UpdateCatalogItem(item *CatalogItem) (*CatalogItem, error) {
+	found, err := c.RetrieveCatalogItem(item.ID)
 	if err != nil {
 		return nil, fmt.Errorf("update catalog item: %w", err)
 	}
 
-	updated, err := s.upsertCatalogObject(&squaremodel.CatalogObject{
+	updated, err := c.upsertCatalogObject(&squaremodel.CatalogObject{
 		ID:       &found.ID,
 		Type:     strPtr(ItemObjectType),
 		ItemData: itemDataFromItem(item),

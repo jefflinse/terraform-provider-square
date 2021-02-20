@@ -1,4 +1,4 @@
-package client
+package square
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ type CatalogCategory struct {
 }
 
 // CreateCatalogCategory creates a new catalog category.
-func (s *Square) CreateCatalogCategory(name string) (string, error) {
+func (c *Client) CreateCatalogCategory(name string) (string, error) {
 	categoryID := newTempID()
 	params := catalogAPI.NewUpsertCatalogObjectParams().WithBody(&squaremodel.UpsertCatalogObjectRequest{
 		IdempotencyKey: newIdempotencyKey(),
@@ -32,7 +32,7 @@ func (s *Square) CreateCatalogCategory(name string) (string, error) {
 		},
 	})
 
-	resp, err := s.square.Catalog.UpsertCatalogObject(params, s.auth())
+	resp, err := c.square.Catalog.UpsertCatalogObject(params, c.auth())
 	if err != nil {
 		return "", fmt.Errorf("create catalog category: %w", err)
 	}
@@ -41,9 +41,9 @@ func (s *Square) CreateCatalogCategory(name string) (string, error) {
 }
 
 // RetrieveCatalogCategory retrieves a catalog category.
-func (s *Square) RetrieveCatalogCategory(id string) (*CatalogCategory, error) {
+func (c *Client) RetrieveCatalogCategory(id string) (*CatalogCategory, error) {
 	params := catalogAPI.NewRetrieveCatalogObjectParams().WithObjectID(id)
-	resp, err := s.square.Catalog.RetrieveCatalogObject(params, s.auth())
+	resp, err := c.square.Catalog.RetrieveCatalogObject(params, c.auth())
 	if err != nil {
 		return nil, fmt.Errorf("retrieve catalog category: %w", err)
 	}
@@ -56,8 +56,8 @@ func (s *Square) RetrieveCatalogCategory(id string) (*CatalogCategory, error) {
 }
 
 // UpdateCatalogCategory updates a catalog category.
-func (s *Square) UpdateCatalogCategory(id string, name string) (string, error) {
-	category, err := s.RetrieveCatalogCategory(id)
+func (c *Client) UpdateCatalogCategory(id string, name string) (string, error) {
+	category, err := c.RetrieveCatalogCategory(id)
 	if err != nil {
 		return "", err
 	}
@@ -74,7 +74,7 @@ func (s *Square) UpdateCatalogCategory(id string, name string) (string, error) {
 		},
 	})
 
-	resp, err := s.square.Catalog.UpsertCatalogObject(params, s.auth())
+	resp, err := c.square.Catalog.UpsertCatalogObject(params, c.auth())
 	if err != nil {
 		return "", fmt.Errorf("update catalog category: %w", err)
 	}

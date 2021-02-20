@@ -1,4 +1,4 @@
-package client
+package square
 
 import (
 	"fmt"
@@ -56,9 +56,9 @@ func taxDataFromTax(tax *CatalogTax) *squaremodel.CatalogTax {
 }
 
 // CreateCatalogTax creates a new catalog tax.
-func (s *Square) CreateCatalogTax(tax *CatalogTax) (*CatalogTax, error) {
+func (c *Client) CreateCatalogTax(tax *CatalogTax) (*CatalogTax, error) {
 	taxID := newTempID()
-	created, err := s.upsertCatalogObject(&squaremodel.CatalogObject{
+	created, err := c.upsertCatalogObject(&squaremodel.CatalogObject{
 		ID:      &taxID,
 		Type:    strPtr(TaxObjectType),
 		TaxData: taxDataFromTax(tax),
@@ -71,8 +71,8 @@ func (s *Square) CreateCatalogTax(tax *CatalogTax) (*CatalogTax, error) {
 }
 
 // RetrieveCatalogTax retrieves a catalog tax.
-func (s *Square) RetrieveCatalogTax(id string) (*CatalogTax, error) {
-	found, err := s.retrieveCatalogObject(id)
+func (c *Client) RetrieveCatalogTax(id string) (*CatalogTax, error) {
+	found, err := c.retrieveCatalogObject(id)
 	if err != nil {
 		return nil, fmt.Errorf("retrieve catalog tax: %w", err)
 	}
@@ -81,13 +81,13 @@ func (s *Square) RetrieveCatalogTax(id string) (*CatalogTax, error) {
 }
 
 // UpdateCatalogTax updates a catalog tax.
-func (s *Square) UpdateCatalogTax(tax *CatalogTax) (*CatalogTax, error) {
-	found, err := s.RetrieveCatalogTax(tax.ID)
+func (c *Client) UpdateCatalogTax(tax *CatalogTax) (*CatalogTax, error) {
+	found, err := c.RetrieveCatalogTax(tax.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	updated, err := s.upsertCatalogObject(&squaremodel.CatalogObject{
+	updated, err := c.upsertCatalogObject(&squaremodel.CatalogObject{
 		ID:      &found.ID,
 		Type:    strPtr(TaxObjectType),
 		TaxData: taxDataFromTax(tax),

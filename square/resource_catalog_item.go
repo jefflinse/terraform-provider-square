@@ -2,7 +2,6 @@ package square
 
 import (
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/jefflinse/terraform-provider-square/square/client"
 )
 
 // CatalogItemAbbreviationMaxLength is the maximum length for a CatalogItem's abbreviation.
@@ -64,7 +63,7 @@ func resourceSquareCatalogItem() *schema.Resource {
 }
 
 func resourceSquareCatalogItemCreate(d *schema.ResourceData, meta interface{}) error {
-	item := client.CatalogItem{
+	item := CatalogItem{
 		Abbreviation:            d.Get("abbreviation").(string),
 		AvailableElectronically: d.Get("available_electronically").(bool),
 		AvailableForPickup:      d.Get("available_for_pickup").(bool),
@@ -82,7 +81,7 @@ func resourceSquareCatalogItemCreate(d *schema.ResourceData, meta interface{}) e
 		item.TaxIDs = append(item.TaxIDs, tid.(string))
 	}
 
-	square := meta.(*client.Square)
+	square := meta.(*Client)
 	created, err := square.CreateCatalogItem(&item)
 	if err != nil {
 		return err
@@ -94,7 +93,7 @@ func resourceSquareCatalogItemCreate(d *schema.ResourceData, meta interface{}) e
 }
 
 func resourceSquareCatalogItemRead(d *schema.ResourceData, meta interface{}) error {
-	square := meta.(*client.Square)
+	square := meta.(*Client)
 	c, err := square.RetrieveCatalogItem(d.Id())
 	if err != nil {
 		return err
@@ -125,8 +124,8 @@ func resourceSquareCatalogItemUpdate(d *schema.ResourceData, meta interface{}) e
 		d.HasChange("name") ||
 		d.HasChange("skip_modifier_screen") ||
 		d.HasChange("tax_ids") {
-		square := meta.(*client.Square)
-		item := client.CatalogItem{
+		square := meta.(*Client)
+		item := CatalogItem{
 			ID:                      d.Id(),
 			Abbreviation:            d.Get("abbreviation").(string),
 			AvailableElectronically: d.Get("available_electronically").(bool),
@@ -155,7 +154,7 @@ func resourceSquareCatalogItemUpdate(d *schema.ResourceData, meta interface{}) e
 }
 
 func resourceSquareCatalogItemDelete(d *schema.ResourceData, meta interface{}) error {
-	square := meta.(*client.Square)
+	square := meta.(*Client)
 	_, err := square.DeleteCatalogObject(d.Id())
 	return err
 }

@@ -2,7 +2,6 @@ package square
 
 import (
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/jefflinse/terraform-provider-square/square/client"
 )
 
 // CatalogTaxNameMaxLength is the maximum length for a CatalogTax's name.
@@ -46,7 +45,7 @@ func resourceSquareCatalogTax() *schema.Resource {
 }
 
 func resourceSquareCatalogTaxCreate(d *schema.ResourceData, meta interface{}) error {
-	tax := client.CatalogTax{
+	tax := CatalogTax{
 		AppliesToCustomAmounts: d.Get("applies_to_custom_amounts").(bool),
 		CalculationPhase:       d.Get("calculation_phase").(string),
 		Enabled:                d.Get("enabled").(bool),
@@ -55,7 +54,7 @@ func resourceSquareCatalogTaxCreate(d *schema.ResourceData, meta interface{}) er
 		Percentage:             d.Get("percentage").(string),
 	}
 
-	square := meta.(*client.Square)
+	square := meta.(*Client)
 	created, err := square.CreateCatalogTax(&tax)
 	if err != nil {
 		return err
@@ -67,7 +66,7 @@ func resourceSquareCatalogTaxCreate(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourceSquareCatalogTaxRead(d *schema.ResourceData, meta interface{}) error {
-	square := meta.(*client.Square)
+	square := meta.(*Client)
 	t, err := square.RetrieveCatalogTax(d.Id())
 	if err != nil {
 		return err
@@ -90,8 +89,8 @@ func resourceSquareCatalogTaxUpdate(d *schema.ResourceData, meta interface{}) er
 		d.HasChange("inclusion_type") ||
 		d.HasChange("name") ||
 		d.HasChange("percentage") {
-		square := meta.(*client.Square)
-		tax := client.CatalogTax{
+		square := meta.(*Client)
+		tax := CatalogTax{
 			ID:                     d.Id(),
 			AppliesToCustomAmounts: d.Get("applies_to_custom_amounts").(bool),
 			CalculationPhase:       d.Get("calculation_phase").(string),
@@ -110,7 +109,7 @@ func resourceSquareCatalogTaxUpdate(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourceSquareCatalogTaxDelete(d *schema.ResourceData, meta interface{}) error {
-	square := meta.(*client.Square)
+	square := meta.(*Client)
 	_, err := square.DeleteCatalogObject(d.Id())
 	return err
 }

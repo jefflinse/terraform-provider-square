@@ -2,7 +2,6 @@ package square
 
 import (
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/jefflinse/terraform-provider-square/square/client"
 )
 
 func resourceSquareCatalogItemVariation() *schema.Resource {
@@ -45,7 +44,7 @@ func resourceSquareCatalogItemVariation() *schema.Resource {
 }
 
 func resourceSquareCatalogItemVariationCreate(d *schema.ResourceData, meta interface{}) error {
-	itemVariation := client.CatalogItemVariation{
+	itemVariation := CatalogItemVariation{
 		ItemID:      d.Get("item_id").(string),
 		Name:        d.Get("name").(string),
 		PricingType: d.Get("pricing_type").(string),
@@ -53,12 +52,12 @@ func resourceSquareCatalogItemVariationCreate(d *schema.ResourceData, meta inter
 		UPC:         d.Get("upc").(string),
 	}
 
-	if itemVariation.PricingType == client.PricingTypeFixed {
+	if itemVariation.PricingType == PricingTypeFixed {
 		itemVariation.Price = int64(d.Get("price").(int))
 		itemVariation.Currency = d.Get("currency").(string)
 	}
 
-	square := meta.(*client.Square)
+	square := meta.(*Client)
 	created, err := square.CreateCatalogItemVariation(&itemVariation)
 	if err != nil {
 		return err
@@ -70,7 +69,7 @@ func resourceSquareCatalogItemVariationCreate(d *schema.ResourceData, meta inter
 }
 
 func resourceSquareCatalogItemVariationRead(d *schema.ResourceData, meta interface{}) error {
-	square := meta.(*client.Square)
+	square := meta.(*Client)
 	itemVariation, err := square.RetrieveCatalogItemVariation(d.Id())
 	if err != nil {
 		return err
@@ -82,7 +81,7 @@ func resourceSquareCatalogItemVariationRead(d *schema.ResourceData, meta interfa
 	d.Set("sku", itemVariation.SKU)
 	d.Set("upc", itemVariation.UPC)
 
-	if itemVariation.PricingType == client.PricingTypeFixed {
+	if itemVariation.PricingType == PricingTypeFixed {
 		d.Set("price", itemVariation.Price)
 		d.Set("currency", itemVariation.Currency)
 	}
@@ -98,9 +97,9 @@ func resourceSquareCatalogItemVariationUpdate(d *schema.ResourceData, meta inter
 		d.HasChange("currency") ||
 		d.HasChange("sku") ||
 		d.HasChange("upc") {
-		square := meta.(*client.Square)
+		square := meta.(*Client)
 
-		itemVariation := client.CatalogItemVariation{
+		itemVariation := CatalogItemVariation{
 			ID:          d.Id(),
 			ItemID:      d.Get("item_id").(string),
 			Name:        d.Get("name").(string),
@@ -109,7 +108,7 @@ func resourceSquareCatalogItemVariationUpdate(d *schema.ResourceData, meta inter
 			UPC:         d.Get("upc").(string),
 		}
 
-		if itemVariation.PricingType == client.PricingTypeFixed {
+		if itemVariation.PricingType == PricingTypeFixed {
 			itemVariation.Price = int64(d.Get("price").(int))
 			itemVariation.Currency = d.Get("currency").(string)
 		}
@@ -124,7 +123,7 @@ func resourceSquareCatalogItemVariationUpdate(d *schema.ResourceData, meta inter
 }
 
 func resourceSquareCatalogItemVariationDelete(d *schema.ResourceData, meta interface{}) error {
-	square := meta.(*client.Square)
+	square := meta.(*Client)
 	_, err := square.DeleteCatalogObject(d.Id())
 	return err
 }

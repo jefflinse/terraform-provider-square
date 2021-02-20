@@ -1,13 +1,13 @@
-package client
+package square
 
 import (
 	catalogAPI "github.com/jefflinse/square-connect/client/catalog"
 	squaremodel "github.com/jefflinse/square-connect/models"
 )
 
-func (s *Square) retrieveCatalogObject(id string) (*squaremodel.CatalogObject, error) {
+func (c *Client) retrieveCatalogObject(id string) (*squaremodel.CatalogObject, error) {
 	params := catalogAPI.NewRetrieveCatalogObjectParams().WithObjectID(id)
-	resp, err := s.square.Catalog.RetrieveCatalogObject(params, s.auth())
+	resp, err := c.square.Catalog.RetrieveCatalogObject(params, c.auth())
 	if err != nil {
 		return nil, err
 	}
@@ -15,13 +15,13 @@ func (s *Square) retrieveCatalogObject(id string) (*squaremodel.CatalogObject, e
 	return resp.Payload.Object, nil
 }
 
-func (s *Square) upsertCatalogObject(obj *squaremodel.CatalogObject) (*squaremodel.CatalogObject, error) {
+func (c *Client) upsertCatalogObject(obj *squaremodel.CatalogObject) (*squaremodel.CatalogObject, error) {
 	params := catalogAPI.NewUpsertCatalogObjectParams().WithBody(&squaremodel.UpsertCatalogObjectRequest{
 		IdempotencyKey: newIdempotencyKey(),
 		Object:         obj,
 	})
 
-	resp, err := s.square.Catalog.UpsertCatalogObject(params, s.auth())
+	resp, err := c.square.Catalog.UpsertCatalogObject(params, c.auth())
 	if err != nil {
 		return nil, err
 	}
@@ -30,9 +30,9 @@ func (s *Square) upsertCatalogObject(obj *squaremodel.CatalogObject) (*squaremod
 }
 
 // DeleteCatalogObject deletes a catalog object with the specified ID.
-func (s *Square) DeleteCatalogObject(id string) (string, error) {
+func (c *Client) DeleteCatalogObject(id string) (string, error) {
 	params := catalogAPI.NewDeleteCatalogObjectParams().WithObjectID(id)
-	resp, err := s.square.Catalog.DeleteCatalogObject(params, s.auth())
+	resp, err := c.square.Catalog.DeleteCatalogObject(params, c.auth())
 	if err != nil {
 		return "", err
 	}

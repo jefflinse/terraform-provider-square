@@ -2,7 +2,6 @@ package square
 
 import (
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/jefflinse/terraform-provider-square/square/client"
 )
 
 // CatalogDiscountNameMaxLength is the maximum length for a CatalogDiscount's name.
@@ -52,7 +51,7 @@ func resourceSquareCatalogDiscount() *schema.Resource {
 }
 
 func resourceSquareCatalogDiscountCreate(d *schema.ResourceData, meta interface{}) error {
-	discount := client.CatalogDiscount{
+	discount := CatalogDiscount{
 		Amount:         int64(d.Get("amount").(int)),
 		Currency:       d.Get("currency").(string),
 		LabelColor:     d.Get("label_color").(string),
@@ -63,7 +62,7 @@ func resourceSquareCatalogDiscountCreate(d *schema.ResourceData, meta interface{
 		Type:           d.Get("type").(string),
 	}
 
-	square := meta.(*client.Square)
+	square := meta.(*Client)
 	created, err := square.CreateCatalogDiscount(&discount)
 	if err != nil {
 		return err
@@ -75,7 +74,7 @@ func resourceSquareCatalogDiscountCreate(d *schema.ResourceData, meta interface{
 }
 
 func resourceSquareCatalogDiscountRead(d *schema.ResourceData, meta interface{}) error {
-	square := meta.(*client.Square)
+	square := meta.(*Client)
 	discount, err := square.RetrieveCatalogDiscount(d.Id())
 	if err != nil {
 		return err
@@ -102,8 +101,8 @@ func resourceSquareCatalogDiscountUpdate(d *schema.ResourceData, meta interface{
 		d.HasChange("percentage") ||
 		d.HasChange("ping_required") ||
 		d.HasChange("type") {
-		square := meta.(*client.Square)
-		discount := client.CatalogDiscount{
+		square := meta.(*Client)
+		discount := CatalogDiscount{
 			ID:             d.Id(),
 			Amount:         int64(d.Get("amount").(int)),
 			Currency:       d.Get("currency").(string),
@@ -124,7 +123,7 @@ func resourceSquareCatalogDiscountUpdate(d *schema.ResourceData, meta interface{
 }
 
 func resourceSquareCatalogDiscountDelete(d *schema.ResourceData, meta interface{}) error {
-	square := meta.(*client.Square)
+	square := meta.(*Client)
 	_, err := square.DeleteCatalogObject(d.Id())
 	return err
 }

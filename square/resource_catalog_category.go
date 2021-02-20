@@ -2,7 +2,6 @@ package square
 
 import (
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/jefflinse/terraform-provider-square/square/client"
 )
 
 func resourceSquareCatalogCategory() *schema.Resource {
@@ -21,10 +20,10 @@ func resourceSquareCatalogCategory() *schema.Resource {
 }
 
 func resourceSquareCatalogCategoryCreate(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*client.Square)
+	square := meta.(*Client)
 	name := d.Get("name").(string)
 
-	id, err := client.CreateCatalogCategory(name)
+	id, err := square.CreateCatalogCategory(name)
 	if err != nil {
 		return err
 	}
@@ -34,8 +33,8 @@ func resourceSquareCatalogCategoryCreate(d *schema.ResourceData, meta interface{
 }
 
 func resourceSquareCatalogCategoryRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*client.Square)
-	c, err := client.RetrieveCatalogCategory(d.Id())
+	square := meta.(*Client)
+	c, err := square.RetrieveCatalogCategory(d.Id())
 	if err != nil {
 		return err
 	}
@@ -47,9 +46,9 @@ func resourceSquareCatalogCategoryRead(d *schema.ResourceData, meta interface{})
 
 func resourceSquareCatalogCategoryUpdate(d *schema.ResourceData, meta interface{}) error {
 	if d.HasChange("name") {
-		client := meta.(*client.Square)
+		square := meta.(*Client)
 		name := d.Get("name").(string)
-		_, err := client.UpdateCatalogCategory(d.Id(), name)
+		_, err := square.UpdateCatalogCategory(d.Id(), name)
 		if err != nil {
 			return err
 		}
@@ -59,7 +58,7 @@ func resourceSquareCatalogCategoryUpdate(d *schema.ResourceData, meta interface{
 }
 
 func resourceSquareCatalogCategoryDelete(d *schema.ResourceData, meta interface{}) error {
-	square := meta.(*client.Square)
+	square := meta.(*Client)
 	_, err := square.DeleteCatalogObject(d.Id())
 	return err
 }
