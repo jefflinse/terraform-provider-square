@@ -8,6 +8,10 @@ import (
 func resourceSquareCatalogItemVariation() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
+			"currency": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 			"item_id": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -16,18 +20,13 @@ func resourceSquareCatalogItemVariation() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"price_amount": {
+			"price": {
 				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"price_currency": {
-				Type:     schema.TypeString,
 				Optional: true,
 			},
 			"pricing_type": {
 				Type:     schema.TypeString,
-				Optional: true,
-				Default:  client.PricingTypeVariable,
+				Required: true,
 			},
 			"sku": {
 				Type:     schema.TypeString,
@@ -55,10 +54,8 @@ func resourceSquareCatalogItemVariationCreate(d *schema.ResourceData, meta inter
 	}
 
 	if itemVariation.PricingType == client.PricingTypeFixed {
-		itemVariation.Price = &client.Money{
-			Amount:   int64(d.Get("price_amount").(int)),
-			Currency: d.Get("price_currency").(string),
-		}
+		itemVariation.Price = int64(d.Get("price").(int))
+		itemVariation.Currency = d.Get("currency").(string)
 	}
 
 	square := meta.(*client.Square)
@@ -86,8 +83,8 @@ func resourceSquareCatalogItemVariationRead(d *schema.ResourceData, meta interfa
 	d.Set("upc", itemVariation.UPC)
 
 	if itemVariation.PricingType == client.PricingTypeFixed {
-		d.Set("price_amount", itemVariation.Price.Amount)
-		d.Set("price_currency", itemVariation.Price.Currency)
+		d.Set("price", itemVariation.Price)
+		d.Set("currency", itemVariation.Currency)
 	}
 
 	return nil
@@ -97,8 +94,8 @@ func resourceSquareCatalogItemVariationUpdate(d *schema.ResourceData, meta inter
 	if d.HasChange("item_id") ||
 		d.HasChange("name") ||
 		d.HasChange("pricing_type") ||
-		d.HasChange("price_amount") ||
-		d.HasChange("price_currency") ||
+		d.HasChange("price") ||
+		d.HasChange("currency") ||
 		d.HasChange("sku") ||
 		d.HasChange("upc") {
 		square := meta.(*client.Square)
@@ -113,10 +110,8 @@ func resourceSquareCatalogItemVariationUpdate(d *schema.ResourceData, meta inter
 		}
 
 		if itemVariation.PricingType == client.PricingTypeFixed {
-			itemVariation.Price = &client.Money{
-				Amount:   int64(d.Get("price_amount").(int)),
-				Currency: d.Get("price_currency").(string),
-			}
+			itemVariation.Price = int64(d.Get("price").(int))
+			itemVariation.Currency = d.Get("currency").(string)
 		}
 
 		_, err := square.UpdateCatalogItemVariation(&itemVariation)

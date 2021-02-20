@@ -22,7 +22,8 @@ type CatalogItemVariation struct {
 	ID          string
 	ItemID      string
 	Name        string
-	Price       *Money
+	Price       int64
+	Currency    string
 	PricingType string
 	SKU         string
 	UPC         string
@@ -43,10 +44,8 @@ func itemVariationFromObjectData(obj *squaremodel.CatalogObject) *CatalogItemVar
 	}
 
 	if iv.PricingType == PricingTypeFixed {
-		iv.Price = &Money{
-			Amount:   obj.ItemVariationData.PriceMoney.Amount,
-			Currency: obj.ItemVariationData.PriceMoney.Currency,
-		}
+		iv.Price = obj.ItemVariationData.PriceMoney.Amount
+		iv.Currency = obj.ItemVariationData.PriceMoney.Currency
 	}
 
 	return iv
@@ -63,8 +62,8 @@ func itemVariationDataFromItemVariation(item *CatalogItemVariation) *squaremodel
 
 	if item.PricingType == PricingTypeFixed {
 		iv.PriceMoney = &squaremodel.Money{
-			Amount:   item.Price.Amount,
-			Currency: item.Price.Currency,
+			Amount:   item.Price,
+			Currency: item.Currency,
 		}
 	}
 

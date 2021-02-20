@@ -30,10 +30,10 @@ resource "square_catalog_item" "test" {
 
 resource "square_catalog_item_variation" "test" {
   name           = "My Terraformed Item Variation"
+  currency       = "USD"
   item_id        = square_catalog_item.test.id
   pricing_type   = "FIXED_PRICING"
-  price_amount   = 350
-  price_currency = "USD"
+  price          = 350
   sku            = "B123PINT"
   upc            = ""
 }
@@ -49,19 +49,19 @@ resource "square_catalog_tax" "test" {
 
 resource "square_catalog_discount" "test1" {
 	name                      = "My Terraformed Fixed Discount"
-	type                      = "FIXED_AMOUNT"
   amount                    = 50
 	currency                  = "USD"
 	label_color               = "FF0000"
 	modify_tax_basis          = "MODIFY_TAX_BASIS"
 	pin_required              = false
+	type                      = "FIXED_AMOUNT"
 }
 
 resource "square_catalog_discount" "test2" {
 	name                      = "My Terraformed Variable Discount"
-	type                      = "FIXED_PERCENTAGE"
   percentage                = "10.0"
 	label_color               = "00FF00"
 	modify_tax_basis          = "MODIFY_TAX_BASIS"
 	pin_required              = true
+	type                      = "FIXED_PERCENTAGE"
 }
