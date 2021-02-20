@@ -1,7 +1,10 @@
 package square
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/terraform/helper/schema"
+	squaremodel "github.com/jefflinse/square-connect/models"
 )
 
 // CatalogItemAbbreviationMaxLength is the maximum length for a CatalogItem's abbreviation.
@@ -63,7 +66,8 @@ func resourceSquareCatalogItem() *schema.Resource {
 }
 
 func resourceSquareCatalogItemCreate(d *schema.ResourceData, meta interface{}) error {
-	item := CatalogItem{
+	itemID := newTempID()
+	item := squaremodel.CatalogItem{
 		Abbreviation:            d.Get("abbreviation").(string),
 		AvailableElectronically: d.Get("available_electronically").(bool),
 		AvailableForPickup:      d.Get("available_for_pickup").(bool),
@@ -76,39 +80,43 @@ func resourceSquareCatalogItemCreate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	taxIDs := d.Get("tax_ids").([]interface{})
-	item.TaxIDs = []string{}
+	item.TaxIds = []string{}
 	for _, tid := range taxIDs {
-		item.TaxIDs = append(item.TaxIDs, tid.(string))
+		item.TaxIds = append(item.TaxIds, tid.(string))
 	}
 
-	square := meta.(*Client)
-	created, err := square.CreateCatalogItem(&item)
+	client := meta.(*Client)
+	created, err := client.upsertCatalogObject(&squaremodel.CatalogObject{
+		ID:       &itemID,
+		Type:     strPtr("ITEM"),
+		ItemData: &item,
+	})
 	if err != nil {
-		return err
+		return fmt.Errorf("create catalog item: %w", err)
 	}
 
-	d.SetId(created.ID)
+	d.SetId(*created.ID)
 
 	return resourceSquareCatalogItemRead(d, meta)
 }
 
 func resourceSquareCatalogItemRead(d *schema.ResourceData, meta interface{}) error {
-	square := meta.(*Client)
-	c, err := square.RetrieveCatalogItem(d.Id())
+	client := meta.(*Client)
+	obj, err := client.retrieveCatalogObject(d.Id())
 	if err != nil {
 		return err
 	}
 
-	d.Set("abbreviation", c.Abbreviation)
-	d.Set("available_electronically", c.AvailableElectronically)
-	d.Set("available_for_pickup", c.AvailableForPickup)
-	d.Set("available_online", c.AvailableOnline)
-	d.Set("category_id", c.CategoryID)
-	d.Set("description", c.Description)
-	d.Set("label_colorr", c.LabelColor)
-	d.Set("name", c.Name)
-	d.Set("skip_modifier_screen", c.SkipModifierScreen)
-	d.Set("tax_ids", c.TaxIDs)
+	d.Set("abbreviation", obj.ItemData.Abbreviation)
+	d.Set("available_electronically", obj.ItemData.AvailableElectronically)
+	d.Set("available_for_pickup", obj.ItemData.AvailableForPickup)
+	d.Set("available_online", obj.ItemData.AvailableOnline)
+	d.Set("category_id", obj.ItemData.CategoryID)
+	d.Set("description", obj.ItemData.Description)
+	d.Set("label_colorr", obj.ItemData.LabelColor)
+	d.Set("name", obj.ItemData.Name)
+	d.Set("skip_modifier_screen", obj.ItemData.SkipModifierScreen)
+	d.Set("tax_ids", obj.ItemData.TaxIds)
 
 	return nil
 }
@@ -120,13 +128,18 @@ func resourceSquareCatalogItemUpdate(d *schema.ResourceData, meta interface{}) e
 		d.HasChange("available_online") ||
 		d.HasChange("category_id") ||
 		d.HasChange("description") ||
-		d.HasChange("label_colorr") ||
+		d.HasChange("label_color") ||
 		d.HasChange("name") ||
 		d.HasChange("skip_modifier_screen") ||
 		d.HasChange("tax_ids") {
-		square := meta.(*Client)
-		item := CatalogItem{
-			ID:                      d.Id(),
+
+		client := meta.(*Client)
+		found, err := client.retrieveCatalogObject(d.Id())
+		if err != nil {
+			return err
+		}
+
+		item := squaremodel.CatalogItem{
 			Abbreviation:            d.Get("abbreviation").(string),
 			AvailableElectronically: d.Get("available_electronically").(bool),
 			AvailableForPickup:      d.Get("available_for_pickup").(bool),
@@ -139,13 +152,17 @@ func resourceSquareCatalogItemUpdate(d *schema.ResourceData, meta interface{}) e
 		}
 
 		taxIDs := d.Get("tax_ids").([]interface{})
-		item.TaxIDs = []string{}
+		item.TaxIds = []string{}
 		for _, tid := range taxIDs {
-			item.TaxIDs = append(item.TaxIDs, tid.(string))
+			item.TaxIds = append(item.TaxIds, tid.(string))
 		}
 
-		_, err := square.UpdateCatalogItem(&item)
-		if err != nil {
+		if _, err := client.upsertCatalogObject(&squaremodel.CatalogObject{
+			ID:       strPtr(*found.ID),
+			Type:     strPtr("ITEM"),
+			Version:  found.Version,
+			ItemData: &item,
+		}); err != nil {
 			return err
 		}
 	}

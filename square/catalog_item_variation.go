@@ -104,7 +104,7 @@ func (c *Client) UpdateCatalogItemVariation(itemVariation *CatalogItemVariation)
 
 	updated, err := c.upsertCatalogObject(&squaremodel.CatalogObject{
 		ID:                &found.ID,
-		Type:              strPtr(ItemObjectType),
+		Type:              strPtr(ItemVariationObjectType),
 		ItemVariationData: itemVariationDataFromItemVariation(itemVariation),
 		Version:           found.version,
 	})
