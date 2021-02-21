@@ -1,12 +1,17 @@
 package square
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/terraform/helper/schema"
 	squaremodel "github.com/jefflinse/square-connect/models"
 	"github.com/jefflinse/terraform-provider-square/square/client"
 )
 
 const (
+	// CatalogItemVariationNameMaxLength is the maximum length for an item variation's name.
+	CatalogItemVariationNameMaxLength = 255
+
 	// ItemVariationObjectType is the Square type for a catalog object describing an item variation.
 	ItemVariationObjectType = "ITEM_VARIATION"
 
@@ -31,6 +36,13 @@ func resourceSquareCatalogItemVariation() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
+				ValidateFunc: func(v interface{}, k string) (wrns []string, errs []error) {
+					val := v.(string)
+					if len(val) > CatalogItemVariationNameMaxLength {
+						errs = append(errs, fmt.Errorf("item variation name '%s' exceeds max length of %d", val, CatalogItemVariationNameMaxLength))
+					}
+					return
+				},
 			},
 			"price": {
 				Type:     schema.TypeInt,

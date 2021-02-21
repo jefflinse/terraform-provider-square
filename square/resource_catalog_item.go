@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	// CatalogItemAbbreviationMaxLength is the maximum length for a CatalogItem's abbreviation.
+	// CatalogItemAbbreviationMaxLength is the maximum length for an item's abbreviation.
 	CatalogItemAbbreviationMaxLength = 24
 
 	// ItemObjectType is the Square type for a catalog object describing an item.

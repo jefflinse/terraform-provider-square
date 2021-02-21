@@ -1,13 +1,15 @@
 package square
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/terraform/helper/schema"
 	squaremodel "github.com/jefflinse/square-connect/models"
 	"github.com/jefflinse/terraform-provider-square/square/client"
 )
 
 const (
-	// CatalogDiscountNameMaxLength is the maximum length for a CatalogDiscount's name.
+	// CatalogDiscountNameMaxLength is the maximum length for a discount's name.
 	CatalogDiscountNameMaxLength = 255
 
 	// DiscountObjectType is the Square type for a catalog object describing a discount.
@@ -46,6 +48,13 @@ func resourceSquareCatalogDiscount() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
+				ValidateFunc: func(v interface{}, k string) (wrns []string, errs []error) {
+					val := v.(string)
+					if len(val) > CatalogDiscountNameMaxLength {
+						errs = append(errs, fmt.Errorf("discount name '%s' exceeds max length of %d", val, CatalogDiscountNameMaxLength))
+					}
+					return
+				},
 			},
 			"percentage": {
 				Type:     schema.TypeString,

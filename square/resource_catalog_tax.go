@@ -1,13 +1,15 @@
 package square
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/terraform/helper/schema"
 	squaremodel "github.com/jefflinse/square-connect/models"
 	"github.com/jefflinse/terraform-provider-square/square/client"
 )
 
 const (
-	// CatalogTaxNameMaxLength is the maximum length for a CatalogTax's name.
+	// CatalogTaxNameMaxLength is the maximum length for a tax's name.
 	CatalogTaxNameMaxLength = 255
 
 	// TaxObjectType is the Square type for a catalog object describing a tax.
@@ -44,6 +46,13 @@ func resourceSquareCatalogTax() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
+				ValidateFunc: func(v interface{}, k string) (wrns []string, errs []error) {
+					val := v.(string)
+					if len(val) > CatalogTaxNameMaxLength {
+						errs = append(errs, fmt.Errorf("tax name '%s' exceeds max length of %d", val, CatalogTaxNameMaxLength))
+					}
+					return
+				},
 			},
 			"percentage": {
 				Type:     schema.TypeString,

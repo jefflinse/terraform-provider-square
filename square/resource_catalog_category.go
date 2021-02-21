@@ -1,13 +1,20 @@
 package square
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/terraform/helper/schema"
 	squaremodel "github.com/jefflinse/square-connect/models"
 	"github.com/jefflinse/terraform-provider-square/square/client"
 )
 
-// CategoryObjectType is the Square type for a catalog object describing a category.
-const CategoryObjectType = "CATEGORY"
+const (
+	// CategoryObjectType is the Square type for a catalog object describing a category.
+	CategoryObjectType = "CATEGORY"
+
+	// CatalogCategoryNameMaxLength is the maximum length for a category's abbreviation.
+	CatalogCategoryNameMaxLength = 255
+)
 
 func resourceSquareCatalogCategory() *schema.Resource {
 	return &schema.Resource{
@@ -15,6 +22,13 @@ func resourceSquareCatalogCategory() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
+				ValidateFunc: func(v interface{}, k string) (wrns []string, errs []error) {
+					val := v.(string)
+					if len(val) > CatalogCategoryNameMaxLength {
+						errs = append(errs, fmt.Errorf("category name '%s' exceeds max length of %d", val, CatalogCategoryNameMaxLength))
+					}
+					return
+				},
 			},
 		},
 		Create: resourceSquareCatalogCategoryCreate,
