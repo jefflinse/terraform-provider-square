@@ -30,12 +30,14 @@ func resourceSquareCatalogDiscount() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"amount": {
-				Type:     schema.TypeInt,
-				Optional: true,
+				Type:          schema.TypeInt,
+				Optional:      true,
+				ConflictsWith: []string{"percentage"},
 			},
 			"currency": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"percentage"},
 			},
 			"label_color": {
 				Type:     schema.TypeString,
@@ -57,8 +59,9 @@ func resourceSquareCatalogDiscount() *schema.Resource {
 				},
 			},
 			"percentage": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"amount", "currency"},
 			},
 			"pin_required": {
 				Type:     schema.TypeBool,
