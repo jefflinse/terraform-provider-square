@@ -16,7 +16,7 @@ const (
 
 // SquareAPI defines an interface for Square's REST API.
 type SquareAPI interface {
-	DeleteCatalogObject(*squaremodel.CatalogObject) (*squaremodel.CatalogObject, error)
+	DeleteCatalogObject(id string) ([]string, error)
 	RetrieveCatalogObject(id string) (*squaremodel.CatalogObject, error)
 	UpsertCatalogObject(*squaremodel.CatalogObject) (*squaremodel.CatalogObject, error)
 }
@@ -26,6 +26,8 @@ type Client struct {
 	auth   func() runtime.ClientAuthInfoWriter
 	square *squareclient.SquareConnect
 }
+
+var _ SquareAPI = &Client{}
 
 // NewClient creates a new Square API client using the specified auth token.
 func NewClient(token string) *Client {

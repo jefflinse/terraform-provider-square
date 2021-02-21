@@ -59,7 +59,7 @@ func resourceSquareCatalogItemVariation() *schema.Resource {
 }
 
 func resourceSquareCatalogItemVariationCreate(d *schema.ResourceData, meta interface{}) error {
-	created, err := meta.(*client.Client).UpsertCatalogObject(&squaremodel.CatalogObject{
+	created, err := meta.(client.SquareAPI).UpsertCatalogObject(&squaremodel.CatalogObject{
 		ID:                newTempID(),
 		Type:              strPtr("ITEM_VARIATION"),
 		ItemVariationData: createCatalogItemVariation(d),
@@ -74,7 +74,7 @@ func resourceSquareCatalogItemVariationCreate(d *schema.ResourceData, meta inter
 }
 
 func resourceSquareCatalogItemVariationRead(d *schema.ResourceData, meta interface{}) error {
-	obj, err := meta.(*client.Client).RetrieveCatalogObject(d.Id())
+	obj, err := meta.(client.SquareAPI).RetrieveCatalogObject(d.Id())
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func resourceSquareCatalogItemVariationUpdate(d *schema.ResourceData, meta inter
 		d.HasChange("sku") ||
 		d.HasChange("upc") {
 
-		client := meta.(*client.Client)
+		client := meta.(client.SquareAPI)
 		obj, err := client.RetrieveCatalogObject(d.Id())
 		if err != nil {
 			return err
@@ -111,7 +111,7 @@ func resourceSquareCatalogItemVariationUpdate(d *schema.ResourceData, meta inter
 }
 
 func resourceSquareCatalogItemVariationDelete(d *schema.ResourceData, meta interface{}) error {
-	_, err := meta.(*client.Client).DeleteCatalogObject(d.Id())
+	_, err := meta.(client.SquareAPI).DeleteCatalogObject(d.Id())
 	return err
 }
 

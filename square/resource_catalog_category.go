@@ -24,7 +24,7 @@ func resourceSquareCatalogCategory() *schema.Resource {
 }
 
 func resourceSquareCatalogCategoryCreate(d *schema.ResourceData, meta interface{}) error {
-	created, err := meta.(*client.Client).UpsertCatalogObject(&squaremodel.CatalogObject{
+	created, err := meta.(client.SquareAPI).UpsertCatalogObject(&squaremodel.CatalogObject{
 		ID:           newTempID(),
 		Type:         strPtr("CATEGORY"),
 		CategoryData: createCatalogCategory(d),
@@ -39,7 +39,7 @@ func resourceSquareCatalogCategoryCreate(d *schema.ResourceData, meta interface{
 }
 
 func resourceSquareCatalogCategoryRead(d *schema.ResourceData, meta interface{}) error {
-	obj, err := meta.(*client.Client).RetrieveCatalogObject(d.Id())
+	obj, err := meta.(client.SquareAPI).RetrieveCatalogObject(d.Id())
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func resourceSquareCatalogCategoryRead(d *schema.ResourceData, meta interface{})
 
 func resourceSquareCatalogCategoryUpdate(d *schema.ResourceData, meta interface{}) error {
 	if d.HasChange("name") {
-		client := meta.(*client.Client)
+		client := meta.(client.SquareAPI)
 		obj, err := client.RetrieveCatalogObject(d.Id())
 		if err != nil {
 			return err
@@ -69,7 +69,7 @@ func resourceSquareCatalogCategoryUpdate(d *schema.ResourceData, meta interface{
 }
 
 func resourceSquareCatalogCategoryDelete(d *schema.ResourceData, meta interface{}) error {
-	_, err := meta.(*client.Client).DeleteCatalogObject(d.Id())
+	_, err := meta.(client.SquareAPI).DeleteCatalogObject(d.Id())
 	return err
 }
 
