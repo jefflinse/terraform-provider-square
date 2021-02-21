@@ -16,6 +16,13 @@ func resourceSquareCatalogItem() *schema.Resource {
 			"abbreviation": {
 				Type:     schema.TypeString,
 				Optional: true,
+				ValidateFunc: func(v interface{}, k string) (wrns []string, errs []error) {
+					val := v.(string)
+					if len(val) > CatalogItemAbbreviationMaxLength {
+						errs = append(errs, fmt.Errorf("item abbreviation '%s' exceeds max length of %d", val, CatalogItemAbbreviationMaxLength))
+					}
+					return
+				},
 			},
 			"available_electronically": {
 				Type:     schema.TypeBool,
@@ -51,7 +58,7 @@ func resourceSquareCatalogItem() *schema.Resource {
 				Default:  false,
 			},
 			"tax_ids": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
@@ -67,7 +74,67 @@ func resourceSquareCatalogItem() *schema.Resource {
 
 func resourceSquareCatalogItemCreate(d *schema.ResourceData, meta interface{}) error {
 	itemID := newTempID()
-	item := squaremodel.CatalogItem{
+	created, err := meta.(*Client).upsertCatalogObject(&squaremodel.CatalogObject{
+		ID:       &itemID,
+		Type:     strPtr("ITEM"),
+		ItemData: createCatalogItem(d),
+	})
+	if err != nil {
+		return fmt.Errorf("create catalog item: %w", err)
+	}
+
+	d.SetId(*created.ID)
+
+	return resourceSquareCatalogItemRead(d, meta)
+}
+
+func resourceSquareCatalogItemRead(d *schema.ResourceData, meta interface{}) error {
+	obj, err := meta.(*Client).retrieveCatalogObject(d.Id())
+	if err != nil {
+		return err
+	}
+
+	return readCatalogItem(obj.ItemData, d)
+}
+
+func resourceSquareCatalogItemUpdate(d *schema.ResourceData, meta interface{}) error {
+	if d.HasChange("abbreviation") ||
+		d.HasChange("available_electronically") ||
+		d.HasChange("available_for_pickup") ||
+		d.HasChange("available_online") ||
+		d.HasChange("category_id") ||
+		d.HasChange("description") ||
+		d.HasChange("label_color") ||
+		d.HasChange("name") ||
+		d.HasChange("skip_modifier_screen") ||
+		d.HasChange("tax_ids") {
+
+		client := meta.(*Client)
+		obj, err := client.retrieveCatalogObject(d.Id())
+		if err != nil {
+			return err
+		}
+
+		if _, err := client.upsertCatalogObject(&squaremodel.CatalogObject{
+			ID:       strPtr(*obj.ID),
+			Type:     strPtr("ITEM"),
+			Version:  obj.Version,
+			ItemData: createCatalogItem(d),
+		}); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func resourceSquareCatalogItemDelete(d *schema.ResourceData, meta interface{}) error {
+	_, err := meta.(*Client).DeleteCatalogObject(d.Id())
+	return err
+}
+
+func createCatalogItem(d *schema.ResourceData) *squaremodel.CatalogItem {
+	item := &squaremodel.CatalogItem{
 		Abbreviation:            d.Get("abbreviation").(string),
 		AvailableElectronically: d.Get("available_electronically").(bool),
 		AvailableForPickup:      d.Get("available_for_pickup").(bool),
@@ -85,93 +152,20 @@ func resourceSquareCatalogItemCreate(d *schema.ResourceData, meta interface{}) e
 		item.TaxIds = append(item.TaxIds, tid.(string))
 	}
 
-	client := meta.(*Client)
-	created, err := client.upsertCatalogObject(&squaremodel.CatalogObject{
-		ID:       &itemID,
-		Type:     strPtr("ITEM"),
-		ItemData: &item,
-	})
-	if err != nil {
-		return fmt.Errorf("create catalog item: %w", err)
-	}
-
-	d.SetId(*created.ID)
-
-	return resourceSquareCatalogItemRead(d, meta)
+	return item
 }
 
-func resourceSquareCatalogItemRead(d *schema.ResourceData, meta interface{}) error {
-	client := meta.(*Client)
-	obj, err := client.retrieveCatalogObject(d.Id())
-	if err != nil {
-		return err
-	}
-
-	d.Set("abbreviation", obj.ItemData.Abbreviation)
-	d.Set("available_electronically", obj.ItemData.AvailableElectronically)
-	d.Set("available_for_pickup", obj.ItemData.AvailableForPickup)
-	d.Set("available_online", obj.ItemData.AvailableOnline)
-	d.Set("category_id", obj.ItemData.CategoryID)
-	d.Set("description", obj.ItemData.Description)
-	d.Set("label_colorr", obj.ItemData.LabelColor)
-	d.Set("name", obj.ItemData.Name)
-	d.Set("skip_modifier_screen", obj.ItemData.SkipModifierScreen)
-	d.Set("tax_ids", obj.ItemData.TaxIds)
+func readCatalogItem(item *squaremodel.CatalogItem, d *schema.ResourceData) error {
+	d.Set("abbreviation", item.Abbreviation)
+	d.Set("available_electronically", item.AvailableElectronically)
+	d.Set("available_for_pickup", item.AvailableForPickup)
+	d.Set("available_online", item.AvailableOnline)
+	d.Set("category_id", item.CategoryID)
+	d.Set("description", item.Description)
+	d.Set("label_color", item.LabelColor)
+	d.Set("name", item.Name)
+	d.Set("skip_modifier_screen", item.SkipModifierScreen)
+	d.Set("tax_ids", item.TaxIds)
 
 	return nil
-}
-
-func resourceSquareCatalogItemUpdate(d *schema.ResourceData, meta interface{}) error {
-	if d.HasChange("abbreviation") ||
-		d.HasChange("available_electronically") ||
-		d.HasChange("available_for_pickup") ||
-		d.HasChange("available_online") ||
-		d.HasChange("category_id") ||
-		d.HasChange("description") ||
-		d.HasChange("label_color") ||
-		d.HasChange("name") ||
-		d.HasChange("skip_modifier_screen") ||
-		d.HasChange("tax_ids") {
-
-		client := meta.(*Client)
-		found, err := client.retrieveCatalogObject(d.Id())
-		if err != nil {
-			return err
-		}
-
-		item := squaremodel.CatalogItem{
-			Abbreviation:            d.Get("abbreviation").(string),
-			AvailableElectronically: d.Get("available_electronically").(bool),
-			AvailableForPickup:      d.Get("available_for_pickup").(bool),
-			AvailableOnline:         d.Get("available_online").(bool),
-			CategoryID:              d.Get("category_id").(string),
-			Description:             d.Get("description").(string),
-			LabelColor:              d.Get("label_colorr").(string),
-			Name:                    d.Get("name").(string),
-			SkipModifierScreen:      d.Get("skip_modifier_screen").(bool),
-		}
-
-		taxIDs := d.Get("tax_ids").([]interface{})
-		item.TaxIds = []string{}
-		for _, tid := range taxIDs {
-			item.TaxIds = append(item.TaxIds, tid.(string))
-		}
-
-		if _, err := client.upsertCatalogObject(&squaremodel.CatalogObject{
-			ID:       strPtr(*found.ID),
-			Type:     strPtr("ITEM"),
-			Version:  found.Version,
-			ItemData: &item,
-		}); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func resourceSquareCatalogItemDelete(d *schema.ResourceData, meta interface{}) error {
-	square := meta.(*Client)
-	_, err := square.DeleteCatalogObject(d.Id())
-	return err
 }
