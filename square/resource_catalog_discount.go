@@ -1,11 +1,29 @@
 package square
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/terraform/helper/schema"
+	squaremodel "github.com/jefflinse/square-connect/models"
 )
 
-// CatalogDiscountNameMaxLength is the maximum length for a CatalogDiscount's name.
-const CatalogDiscountNameMaxLength = 255
+const (
+	// CatalogDiscountNameMaxLength is the maximum length for a CatalogDiscount's name.
+	CatalogDiscountNameMaxLength = 255
+
+	// DiscountObjectType designates an object that describes a CatalogDiscount.
+	DiscountObjectType = "DISCOUNT"
+
+	// DiscountTypeFixedPercentage applies the discount as a fixed percentage (e.g., 5%) off the item price.
+	DiscountTypeFixedPercentage = "FIXED_PERCENTAGE"
+
+	// DiscountTypeFixedAmount applies the discount as a fixed amount (e.g., $1.00) off the item price.
+	DiscountTypeFixedAmount = "FIXED_AMOUNT"
+
+	// DiscountTypeVariablePercentage applies the discount as a variable percentage off the item price.
+	// The percentage will be specified at the time of sale.
+	DiscountTypeVariablePercentage = "VARIABLE_PERCENTAGE"
+)
 
 func resourceSquareCatalogDiscount() *schema.Resource {
 	return &schema.Resource{
@@ -51,45 +69,28 @@ func resourceSquareCatalogDiscount() *schema.Resource {
 }
 
 func resourceSquareCatalogDiscountCreate(d *schema.ResourceData, meta interface{}) error {
-	discount := CatalogDiscount{
-		Amount:         int64(d.Get("amount").(int)),
-		Currency:       d.Get("currency").(string),
-		LabelColor:     d.Get("label_color").(string),
-		ModifyTaxBasis: d.Get("modify_tax_basis").(string),
-		Name:           d.Get("name").(string),
-		Percentage:     d.Get("percentage").(string),
-		PinRequired:    d.Get("pin_required").(bool),
-		Type:           d.Get("type").(string),
-	}
-
-	square := meta.(*Client)
-	created, err := square.CreateCatalogDiscount(&discount)
+	discountID := newTempID()
+	created, err := meta.(*Client).upsertCatalogObject(&squaremodel.CatalogObject{
+		ID:           &discountID,
+		Type:         strPtr("DISCOUNT"),
+		DiscountData: createCatalogDiscount(d),
+	})
 	if err != nil {
-		return err
+		return fmt.Errorf("create catalog discount: %w", err)
 	}
 
-	d.SetId(created.ID)
+	d.SetId(*created.ID)
 
 	return resourceSquareCatalogDiscountRead(d, meta)
 }
 
 func resourceSquareCatalogDiscountRead(d *schema.ResourceData, meta interface{}) error {
-	square := meta.(*Client)
-	discount, err := square.RetrieveCatalogDiscount(d.Id())
+	obj, err := meta.(*Client).retrieveCatalogObject(d.Id())
 	if err != nil {
 		return err
 	}
 
-	d.Set("amount", discount.Amount)
-	d.Set("currency", discount.Currency)
-	d.Set("label_color", discount.LabelColor)
-	d.Set("modify_tax_basis", discount.ModifyTaxBasis)
-	d.Set("name", discount.Name)
-	d.Set("percentage", discount.Percentage)
-	d.Set("pin_required", discount.PinRequired)
-	d.Set("type", discount.Type)
-
-	return nil
+	return readCatalogDiscount(obj.DiscountData, d)
 }
 
 func resourceSquareCatalogDiscountUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -99,22 +100,21 @@ func resourceSquareCatalogDiscountUpdate(d *schema.ResourceData, meta interface{
 		d.HasChange("modify_tax_basis") ||
 		d.HasChange("name") ||
 		d.HasChange("percentage") ||
-		d.HasChange("ping_required") ||
+		d.HasChange("pin_required") ||
 		d.HasChange("type") {
-		square := meta.(*Client)
-		discount := CatalogDiscount{
-			ID:             d.Id(),
-			Amount:         int64(d.Get("amount").(int)),
-			Currency:       d.Get("currency").(string),
-			LabelColor:     d.Get("label_color").(string),
-			ModifyTaxBasis: d.Get("modify_tax_basis").(string),
-			Name:           d.Get("name").(string),
-			Percentage:     d.Get("percentage").(string),
-			PinRequired:    d.Get("pin_required").(bool),
-			Type:           d.Get("type").(string),
-		}
-		_, err := square.UpdateCatalogDiscount(&discount)
+
+		client := meta.(*Client)
+		obj, err := client.retrieveCatalogObject(d.Id())
 		if err != nil {
+			return err
+		}
+
+		if _, err := client.upsertCatalogObject(&squaremodel.CatalogObject{
+			ID:           strPtr(*obj.ID),
+			Type:         strPtr("DISCOUNT"),
+			Version:      obj.Version,
+			DiscountData: createCatalogDiscount(d),
+		}); err != nil {
 			return err
 		}
 	}
@@ -123,7 +123,51 @@ func resourceSquareCatalogDiscountUpdate(d *schema.ResourceData, meta interface{
 }
 
 func resourceSquareCatalogDiscountDelete(d *schema.ResourceData, meta interface{}) error {
-	square := meta.(*Client)
-	_, err := square.DeleteCatalogObject(d.Id())
+	_, err := meta.(*Client).DeleteCatalogObject(d.Id())
 	return err
+}
+
+func createCatalogDiscount(d *schema.ResourceData) *squaremodel.CatalogDiscount {
+	discount := &squaremodel.CatalogDiscount{
+		LabelColor:     d.Get("label_color").(string),
+		ModifyTaxBasis: d.Get("modify_tax_basis").(string),
+		Name:           d.Get("name").(string),
+		PinRequired:    d.Get("pin_required").(bool),
+		DiscountType:   d.Get("type").(string),
+	}
+
+	switch discount.DiscountType {
+	case DiscountTypeFixedAmount:
+		discount.AmountMoney = &squaremodel.Money{
+			Amount:   int64(d.Get("amount").(int)),
+			Currency: d.Get("currency").(string),
+		}
+	case DiscountTypeFixedPercentage:
+		discount.Percentage = d.Get("percentage").(string)
+	case DiscountTypeVariablePercentage:
+		discount.Percentage = ""
+	}
+
+	return discount
+}
+
+func readCatalogDiscount(discount *squaremodel.CatalogDiscount, d *schema.ResourceData) error {
+	d.Set("label_color", discount.LabelColor)
+	d.Set("modify_tax_basis", discount.ModifyTaxBasis)
+	d.Set("name", discount.Name)
+	d.Set("percentage", discount.Percentage)
+	d.Set("pin_required", discount.PinRequired)
+	d.Set("type", discount.DiscountType)
+
+	switch discount.DiscountType {
+	case DiscountTypeFixedAmount:
+		d.Set("amount", discount.AmountMoney.Amount)
+		d.Set("currency", discount.AmountMoney.Currency)
+	case DiscountTypeFixedPercentage:
+		d.Set("percentage", discount.Percentage)
+	case DiscountTypeVariablePercentage:
+		d.Set("percentage", "")
+	}
+
+	return nil
 }
