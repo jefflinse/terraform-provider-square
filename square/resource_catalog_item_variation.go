@@ -1,7 +1,21 @@
 package square
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/terraform/helper/schema"
+	squaremodel "github.com/jefflinse/square-connect/models"
+)
+
+const (
+	// ItemVariationObjectType designates an object that describes a CatalogItemVariation.
+	ItemVariationObjectType = "ITEM_VARIATION"
+
+	// PricingTypeFixed designated a CatalogItemVariation with fixed pricing.
+	PricingTypeFixed = "FIXED_PRICING"
+
+	// PricingTypeVariable designated a CatalogItemVariation with variable pricing.
+	PricingTypeVariable = "VARIABLE_PRICING"
 )
 
 func resourceSquareCatalogItemVariation() *schema.Resource {
@@ -44,49 +58,28 @@ func resourceSquareCatalogItemVariation() *schema.Resource {
 }
 
 func resourceSquareCatalogItemVariationCreate(d *schema.ResourceData, meta interface{}) error {
-	itemVariation := CatalogItemVariation{
-		ItemID:      d.Get("item_id").(string),
-		Name:        d.Get("name").(string),
-		PricingType: d.Get("pricing_type").(string),
-		SKU:         d.Get("sku").(string),
-		UPC:         d.Get("upc").(string),
-	}
-
-	if itemVariation.PricingType == PricingTypeFixed {
-		itemVariation.Price = int64(d.Get("price").(int))
-		itemVariation.Currency = d.Get("currency").(string)
-	}
-
-	square := meta.(*Client)
-	created, err := square.CreateCatalogItemVariation(&itemVariation)
+	itemID := newTempID()
+	created, err := meta.(*Client).upsertCatalogObject(&squaremodel.CatalogObject{
+		ID:                &itemID,
+		Type:              strPtr("ITEM_VARIATION"),
+		ItemVariationData: createCatalogItemVariation(d),
+	})
 	if err != nil {
-		return err
+		return fmt.Errorf("create catalog item: %w", err)
 	}
 
-	d.SetId(created.ID)
+	d.SetId(*created.ID)
 
 	return resourceSquareCatalogItemVariationRead(d, meta)
 }
 
 func resourceSquareCatalogItemVariationRead(d *schema.ResourceData, meta interface{}) error {
-	square := meta.(*Client)
-	itemVariation, err := square.RetrieveCatalogItemVariation(d.Id())
+	obj, err := meta.(*Client).retrieveCatalogObject(d.Id())
 	if err != nil {
 		return err
 	}
 
-	d.Set("item_id", itemVariation.ItemID)
-	d.Set("name", itemVariation.Name)
-	d.Set("pricing_type", itemVariation.PricingType)
-	d.Set("sku", itemVariation.SKU)
-	d.Set("upc", itemVariation.UPC)
-
-	if itemVariation.PricingType == PricingTypeFixed {
-		d.Set("price", itemVariation.Price)
-		d.Set("currency", itemVariation.Currency)
-	}
-
-	return nil
+	return readCatalogItemVariation(obj.ItemVariationData, d)
 }
 
 func resourceSquareCatalogItemVariationUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -97,24 +90,19 @@ func resourceSquareCatalogItemVariationUpdate(d *schema.ResourceData, meta inter
 		d.HasChange("currency") ||
 		d.HasChange("sku") ||
 		d.HasChange("upc") {
-		square := meta.(*Client)
 
-		itemVariation := CatalogItemVariation{
-			ID:          d.Id(),
-			ItemID:      d.Get("item_id").(string),
-			Name:        d.Get("name").(string),
-			PricingType: d.Get("pricing_type").(string),
-			SKU:         d.Get("sku").(string),
-			UPC:         d.Get("upc").(string),
-		}
-
-		if itemVariation.PricingType == PricingTypeFixed {
-			itemVariation.Price = int64(d.Get("price").(int))
-			itemVariation.Currency = d.Get("currency").(string)
-		}
-
-		_, err := square.UpdateCatalogItemVariation(&itemVariation)
+		client := meta.(*Client)
+		obj, err := client.retrieveCatalogObject(d.Id())
 		if err != nil {
+			return err
+		}
+
+		if _, err := client.upsertCatalogObject(&squaremodel.CatalogObject{
+			ID:                strPtr(*obj.ID),
+			Type:              strPtr("ITEM_VARIATION"),
+			Version:           obj.Version,
+			ItemVariationData: createCatalogItemVariation(d),
+		}); err != nil {
 			return err
 		}
 	}
@@ -123,7 +111,40 @@ func resourceSquareCatalogItemVariationUpdate(d *schema.ResourceData, meta inter
 }
 
 func resourceSquareCatalogItemVariationDelete(d *schema.ResourceData, meta interface{}) error {
-	square := meta.(*Client)
-	_, err := square.DeleteCatalogObject(d.Id())
+	_, err := meta.(*Client).DeleteCatalogObject(d.Id())
 	return err
+}
+
+func createCatalogItemVariation(d *schema.ResourceData) *squaremodel.CatalogItemVariation {
+	itemVariation := &squaremodel.CatalogItemVariation{
+		ItemID:      d.Get("item_id").(string),
+		Name:        d.Get("name").(string),
+		PricingType: d.Get("pricing_type").(string),
+		Sku:         d.Get("sku").(string),
+		Upc:         d.Get("upc").(string),
+	}
+
+	if itemVariation.PricingType == PricingTypeFixed {
+		itemVariation.PriceMoney = &squaremodel.Money{
+			Amount:   int64(d.Get("price").(int)),
+			Currency: d.Get("currency").(string),
+		}
+	}
+
+	return itemVariation
+}
+
+func readCatalogItemVariation(itemVariation *squaremodel.CatalogItemVariation, d *schema.ResourceData) error {
+	d.Set("item_id", itemVariation.ItemID)
+	d.Set("name", itemVariation.Name)
+	d.Set("pricing_type", itemVariation.PricingType)
+	d.Set("sku", itemVariation.Sku)
+	d.Set("upc", itemVariation.Upc)
+
+	if itemVariation.PricingType == PricingTypeFixed {
+		d.Set("price", itemVariation.PriceMoney.Amount)
+		d.Set("currency", itemVariation.PriceMoney.Currency)
+	}
+
+	return nil
 }
