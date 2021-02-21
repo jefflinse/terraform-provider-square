@@ -1,11 +1,25 @@
 package square
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/terraform/helper/schema"
+	squaremodel "github.com/jefflinse/square-connect/models"
 )
 
-// CatalogTaxNameMaxLength is the maximum length for a CatalogTax's name.
-const CatalogTaxNameMaxLength = 255
+const (
+	// CatalogTaxNameMaxLength is the maximum length for a CatalogTax's name.
+	CatalogTaxNameMaxLength = 255
+
+	// TaxObjectType designates an object that describes a CatalogTax.
+	TaxObjectType = "TAX"
+
+	// TaxPhaseSubtotal indicates the fee is calculated based on the payment's subtotal.
+	TaxPhaseSubtotal = "TAX_SUBTOTAL_PHASE"
+
+	// TaxPhaseTotal indicates the fee is calculated based on the payment's total.
+	TaxPhaseTotal = "TAX_TOTAL_PHASE"
+)
 
 func resourceSquareCatalogTax() *schema.Resource {
 	return &schema.Resource{
@@ -45,62 +59,54 @@ func resourceSquareCatalogTax() *schema.Resource {
 }
 
 func resourceSquareCatalogTaxCreate(d *schema.ResourceData, meta interface{}) error {
-	tax := CatalogTax{
-		AppliesToCustomAmounts: d.Get("applies_to_custom_amounts").(bool),
-		CalculationPhase:       d.Get("calculation_phase").(string),
-		Enabled:                d.Get("enabled").(bool),
-		InclusionType:          d.Get("inclusion_type").(string),
-		Name:                   d.Get("name").(string),
-		Percentage:             d.Get("percentage").(string),
-	}
-
-	square := meta.(*Client)
-	created, err := square.CreateCatalogTax(&tax)
+	taxID := newTempID()
+	created, err := meta.(*Client).upsertCatalogObject(&squaremodel.CatalogObject{
+		ID:      &taxID,
+		Type:    strPtr("TAX"),
+		TaxData: createCatalogTax(d),
+	})
 	if err != nil {
-		return err
+		return fmt.Errorf("create catalog tax: %w", err)
 	}
 
-	d.SetId(created.ID)
+	d.SetId(*created.ID)
 
 	return resourceSquareCatalogTaxRead(d, meta)
 }
 
 func resourceSquareCatalogTaxRead(d *schema.ResourceData, meta interface{}) error {
-	square := meta.(*Client)
-	t, err := square.RetrieveCatalogTax(d.Id())
+	obj, err := meta.(*Client).retrieveCatalogObject(d.Id())
 	if err != nil {
 		return err
 	}
 
-	d.Set("applies_to_custom_amounts", t.AppliesToCustomAmounts)
-	d.Set("calculation_phase", t.CalculationPhase)
-	d.Set("enabled", t.Enabled)
-	d.Set("inclusion_type", t.InclusionType)
-	d.Set("name", t.Name)
-	d.Set("percentage", t.Percentage)
-
-	return nil
+	return readCatalogTax(obj.TaxData, d)
 }
 
 func resourceSquareCatalogTaxUpdate(d *schema.ResourceData, meta interface{}) error {
-	if d.HasChange("applies_to_custom_amounts") ||
-		d.HasChange("calculation_phase") ||
-		d.HasChange("enabled") ||
-		d.HasChange("inclusion_type") ||
+	if d.HasChange("abbreviation") ||
+		d.HasChange("available_electronically") ||
+		d.HasChange("available_for_pickup") ||
+		d.HasChange("available_online") ||
+		d.HasChange("category_id") ||
+		d.HasChange("description") ||
+		d.HasChange("label_color") ||
 		d.HasChange("name") ||
-		d.HasChange("percentage") {
-		square := meta.(*Client)
-		tax := CatalogTax{
-			ID:                     d.Id(),
-			AppliesToCustomAmounts: d.Get("applies_to_custom_amounts").(bool),
-			CalculationPhase:       d.Get("calculation_phase").(string),
-			Enabled:                d.Get("enabled").(bool),
-			InclusionType:          d.Get("inclusion_type").(string),
-			Name:                   d.Get("name").(string),
-			Percentage:             d.Get("percentage").(string),
-		}
-		_, err := square.UpdateCatalogTax(&tax)
+		d.HasChange("skip_modifier_screen") ||
+		d.HasChange("tax_ids") {
+
+		client := meta.(*Client)
+		obj, err := client.retrieveCatalogObject(d.Id())
 		if err != nil {
+			return err
+		}
+
+		if _, err := client.upsertCatalogObject(&squaremodel.CatalogObject{
+			ID:      strPtr(*obj.ID),
+			Type:    strPtr("TAX"),
+			Version: obj.Version,
+			TaxData: createCatalogTax(d),
+		}); err != nil {
 			return err
 		}
 	}
@@ -109,7 +115,30 @@ func resourceSquareCatalogTaxUpdate(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourceSquareCatalogTaxDelete(d *schema.ResourceData, meta interface{}) error {
-	square := meta.(*Client)
-	_, err := square.DeleteCatalogObject(d.Id())
+	_, err := meta.(*Client).DeleteCatalogObject(d.Id())
 	return err
+}
+
+func createCatalogTax(d *schema.ResourceData) *squaremodel.CatalogTax {
+	tax := &squaremodel.CatalogTax{
+		AppliesToCustomAmounts: d.Get("applies_to_custom_amounts").(bool),
+		CalculationPhase:       d.Get("calculation_phase").(string),
+		Enabled:                d.Get("enabled").(bool),
+		InclusionType:          d.Get("inclusion_type").(string),
+		Name:                   d.Get("name").(string),
+		Percentage:             d.Get("percentage").(string),
+	}
+
+	return tax
+}
+
+func readCatalogTax(tax *squaremodel.CatalogTax, d *schema.ResourceData) error {
+	d.Set("applies_to_custom_amounts", tax.AppliesToCustomAmounts)
+	d.Set("calculation_phase", tax.CalculationPhase)
+	d.Set("enabled", tax.Enabled)
+	d.Set("inclusion_type", tax.InclusionType)
+	d.Set("name", tax.Name)
+	d.Set("percentage", tax.Percentage)
+
+	return nil
 }
