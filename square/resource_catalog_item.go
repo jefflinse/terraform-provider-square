@@ -82,7 +82,7 @@ func resourceSquareCatalogItemCreate(d *schema.ResourceData, meta interface{}) e
 	created, err := meta.(client.SquareAPI).UpsertCatalogObject(&squaremodel.CatalogObject{
 		ID:       newTempID(),
 		Type:     strPtr(ItemObjectType),
-		ItemData: createCatalogItem(d),
+		ItemData: expandCatalogItem(d),
 	})
 	if err != nil {
 		return err
@@ -99,7 +99,7 @@ func resourceSquareCatalogItemRead(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 
-	return readCatalogItem(obj.ItemData, d)
+	return flattenCatalogItem(obj.ItemData, d)
 }
 
 func resourceSquareCatalogItemUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -124,7 +124,7 @@ func resourceSquareCatalogItemUpdate(d *schema.ResourceData, meta interface{}) e
 			ID:       strPtr(*obj.ID),
 			Type:     strPtr(ItemObjectType),
 			Version:  obj.Version,
-			ItemData: createCatalogItem(d),
+			ItemData: expandCatalogItem(d),
 		}); err != nil {
 			return err
 		}
@@ -138,7 +138,7 @@ func resourceSquareCatalogItemDelete(d *schema.ResourceData, meta interface{}) e
 	return err
 }
 
-func createCatalogItem(d *schema.ResourceData) *squaremodel.CatalogItem {
+func expandCatalogItem(d *schema.ResourceData) *squaremodel.CatalogItem {
 	item := &squaremodel.CatalogItem{
 		Abbreviation:            d.Get("abbreviation").(string),
 		AvailableElectronically: d.Get("available_electronically").(bool),
@@ -160,7 +160,7 @@ func createCatalogItem(d *schema.ResourceData) *squaremodel.CatalogItem {
 	return item
 }
 
-func readCatalogItem(item *squaremodel.CatalogItem, d *schema.ResourceData) error {
+func flattenCatalogItem(item *squaremodel.CatalogItem, d *schema.ResourceData) error {
 	d.Set("abbreviation", item.Abbreviation)
 	d.Set("available_electronically", item.AvailableElectronically)
 	d.Set("available_for_pickup", item.AvailableForPickup)

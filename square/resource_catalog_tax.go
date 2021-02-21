@@ -61,7 +61,7 @@ func resourceSquareCatalogTaxCreate(d *schema.ResourceData, meta interface{}) er
 	created, err := meta.(client.SquareAPI).UpsertCatalogObject(&squaremodel.CatalogObject{
 		ID:      newTempID(),
 		Type:    strPtr(TaxObjectType),
-		TaxData: createCatalogTax(d),
+		TaxData: expandCatalogTax(d),
 	})
 	if err != nil {
 		return err
@@ -78,7 +78,7 @@ func resourceSquareCatalogTaxRead(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 
-	return readCatalogTax(obj.TaxData, d)
+	return flattenCatalogTax(obj.TaxData, d)
 }
 
 func resourceSquareCatalogTaxUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -103,7 +103,7 @@ func resourceSquareCatalogTaxUpdate(d *schema.ResourceData, meta interface{}) er
 			ID:      strPtr(*obj.ID),
 			Type:    strPtr(TaxObjectType),
 			Version: obj.Version,
-			TaxData: createCatalogTax(d),
+			TaxData: expandCatalogTax(d),
 		}); err != nil {
 			return err
 		}
@@ -117,7 +117,7 @@ func resourceSquareCatalogTaxDelete(d *schema.ResourceData, meta interface{}) er
 	return err
 }
 
-func createCatalogTax(d *schema.ResourceData) *squaremodel.CatalogTax {
+func expandCatalogTax(d *schema.ResourceData) *squaremodel.CatalogTax {
 	tax := &squaremodel.CatalogTax{
 		AppliesToCustomAmounts: d.Get("applies_to_custom_amounts").(bool),
 		CalculationPhase:       d.Get("calculation_phase").(string),
@@ -130,7 +130,7 @@ func createCatalogTax(d *schema.ResourceData) *squaremodel.CatalogTax {
 	return tax
 }
 
-func readCatalogTax(tax *squaremodel.CatalogTax, d *schema.ResourceData) error {
+func flattenCatalogTax(tax *squaremodel.CatalogTax, d *schema.ResourceData) error {
 	d.Set("applies_to_custom_amounts", tax.AppliesToCustomAmounts)
 	d.Set("calculation_phase", tax.CalculationPhase)
 	d.Set("enabled", tax.Enabled)

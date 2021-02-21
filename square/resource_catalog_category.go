@@ -28,7 +28,7 @@ func resourceSquareCatalogCategoryCreate(d *schema.ResourceData, meta interface{
 	created, err := meta.(client.SquareAPI).UpsertCatalogObject(&squaremodel.CatalogObject{
 		ID:           newTempID(),
 		Type:         strPtr(CategoryObjectType),
-		CategoryData: createCatalogCategory(d),
+		CategoryData: expandCatalogCategory(d),
 	})
 	if err != nil {
 		return err
@@ -45,7 +45,7 @@ func resourceSquareCatalogCategoryRead(d *schema.ResourceData, meta interface{})
 		return err
 	}
 
-	return readCatalogCategory(obj.CategoryData, d)
+	return flattenCatalogCategory(obj.CategoryData, d)
 }
 
 func resourceSquareCatalogCategoryUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -60,7 +60,7 @@ func resourceSquareCatalogCategoryUpdate(d *schema.ResourceData, meta interface{
 			ID:           strPtr(*obj.ID),
 			Type:         strPtr(CategoryObjectType),
 			Version:      obj.Version,
-			CategoryData: createCatalogCategory(d),
+			CategoryData: expandCatalogCategory(d),
 		}); err != nil {
 			return err
 		}
@@ -74,13 +74,13 @@ func resourceSquareCatalogCategoryDelete(d *schema.ResourceData, meta interface{
 	return err
 }
 
-func createCatalogCategory(d *schema.ResourceData) *squaremodel.CatalogCategory {
+func expandCatalogCategory(d *schema.ResourceData) *squaremodel.CatalogCategory {
 	return &squaremodel.CatalogCategory{
 		Name: d.Get("name").(string),
 	}
 }
 
-func readCatalogCategory(category *squaremodel.CatalogCategory, d *schema.ResourceData) error {
+func flattenCatalogCategory(category *squaremodel.CatalogCategory, d *schema.ResourceData) error {
 	d.Set("name", category.Name)
 	return nil
 }

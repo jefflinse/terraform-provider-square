@@ -71,7 +71,7 @@ func resourceSquareCatalogDiscountCreate(d *schema.ResourceData, meta interface{
 	created, err := meta.(client.SquareAPI).UpsertCatalogObject(&squaremodel.CatalogObject{
 		ID:           newTempID(),
 		Type:         strPtr(DiscountObjectType),
-		DiscountData: createCatalogDiscount(d),
+		DiscountData: expandCatalogDiscount(d),
 	})
 	if err != nil {
 		return err
@@ -88,7 +88,7 @@ func resourceSquareCatalogDiscountRead(d *schema.ResourceData, meta interface{})
 		return err
 	}
 
-	return readCatalogDiscount(obj.DiscountData, d)
+	return flattenCatalogDiscount(obj.DiscountData, d)
 }
 
 func resourceSquareCatalogDiscountUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -111,7 +111,7 @@ func resourceSquareCatalogDiscountUpdate(d *schema.ResourceData, meta interface{
 			ID:           strPtr(*obj.ID),
 			Type:         strPtr(DiscountObjectType),
 			Version:      obj.Version,
-			DiscountData: createCatalogDiscount(d),
+			DiscountData: expandCatalogDiscount(d),
 		}); err != nil {
 			return err
 		}
@@ -125,7 +125,7 @@ func resourceSquareCatalogDiscountDelete(d *schema.ResourceData, meta interface{
 	return err
 }
 
-func createCatalogDiscount(d *schema.ResourceData) *squaremodel.CatalogDiscount {
+func expandCatalogDiscount(d *schema.ResourceData) *squaremodel.CatalogDiscount {
 	discount := &squaremodel.CatalogDiscount{
 		LabelColor:     d.Get("label_color").(string),
 		ModifyTaxBasis: d.Get("modify_tax_basis").(string),
@@ -149,7 +149,7 @@ func createCatalogDiscount(d *schema.ResourceData) *squaremodel.CatalogDiscount 
 	return discount
 }
 
-func readCatalogDiscount(discount *squaremodel.CatalogDiscount, d *schema.ResourceData) error {
+func flattenCatalogDiscount(discount *squaremodel.CatalogDiscount, d *schema.ResourceData) error {
 	d.Set("label_color", discount.LabelColor)
 	d.Set("modify_tax_basis", discount.ModifyTaxBasis)
 	d.Set("name", discount.Name)

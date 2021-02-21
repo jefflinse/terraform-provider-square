@@ -60,7 +60,7 @@ func resourceSquareCatalogItemVariationCreate(d *schema.ResourceData, meta inter
 	created, err := meta.(client.SquareAPI).UpsertCatalogObject(&squaremodel.CatalogObject{
 		ID:                newTempID(),
 		Type:              strPtr(ItemVariationObjectType),
-		ItemVariationData: createCatalogItemVariation(d),
+		ItemVariationData: expandCatalogItemVariation(d),
 	})
 	if err != nil {
 		return err
@@ -77,7 +77,7 @@ func resourceSquareCatalogItemVariationRead(d *schema.ResourceData, meta interfa
 		return err
 	}
 
-	return readCatalogItemVariation(obj.ItemVariationData, d)
+	return flattenCatalogItemVariation(obj.ItemVariationData, d)
 }
 
 func resourceSquareCatalogItemVariationUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -99,7 +99,7 @@ func resourceSquareCatalogItemVariationUpdate(d *schema.ResourceData, meta inter
 			ID:                strPtr(*obj.ID),
 			Type:              strPtr(ItemVariationObjectType),
 			Version:           obj.Version,
-			ItemVariationData: createCatalogItemVariation(d),
+			ItemVariationData: expandCatalogItemVariation(d),
 		}); err != nil {
 			return err
 		}
@@ -113,7 +113,7 @@ func resourceSquareCatalogItemVariationDelete(d *schema.ResourceData, meta inter
 	return err
 }
 
-func createCatalogItemVariation(d *schema.ResourceData) *squaremodel.CatalogItemVariation {
+func expandCatalogItemVariation(d *schema.ResourceData) *squaremodel.CatalogItemVariation {
 	itemVariation := &squaremodel.CatalogItemVariation{
 		ItemID:      d.Get("item_id").(string),
 		Name:        d.Get("name").(string),
@@ -132,7 +132,7 @@ func createCatalogItemVariation(d *schema.ResourceData) *squaremodel.CatalogItem
 	return itemVariation
 }
 
-func readCatalogItemVariation(itemVariation *squaremodel.CatalogItemVariation, d *schema.ResourceData) error {
+func flattenCatalogItemVariation(itemVariation *squaremodel.CatalogItemVariation, d *schema.ResourceData) error {
 	d.Set("item_id", itemVariation.ItemID)
 	d.Set("name", itemVariation.Name)
 	d.Set("pricing_type", itemVariation.PricingType)
