@@ -1,8 +1,6 @@
 package square
 
 import (
-	"fmt"
-
 	"github.com/hashicorp/terraform/helper/schema"
 	squaremodel "github.com/jefflinse/square-connect/models"
 	"github.com/jefflinse/terraform-provider-square/square/client"
@@ -12,7 +10,7 @@ const (
 	// CatalogDiscountNameMaxLength is the maximum length for a CatalogDiscount's name.
 	CatalogDiscountNameMaxLength = 255
 
-	// DiscountObjectType designates an object that describes a CatalogDiscount.
+	// DiscountObjectType is the Square type for a catalog object describing a discount.
 	DiscountObjectType = "DISCOUNT"
 
 	// DiscountTypeFixedPercentage applies the discount as a fixed percentage (e.g., 5%) off the item price.
@@ -72,11 +70,11 @@ func resourceSquareCatalogDiscount() *schema.Resource {
 func resourceSquareCatalogDiscountCreate(d *schema.ResourceData, meta interface{}) error {
 	created, err := meta.(client.SquareAPI).UpsertCatalogObject(&squaremodel.CatalogObject{
 		ID:           newTempID(),
-		Type:         strPtr("DISCOUNT"),
+		Type:         strPtr(DiscountObjectType),
 		DiscountData: createCatalogDiscount(d),
 	})
 	if err != nil {
-		return fmt.Errorf("create catalog discount: %w", err)
+		return err
 	}
 
 	d.SetId(*created.ID)
@@ -111,7 +109,7 @@ func resourceSquareCatalogDiscountUpdate(d *schema.ResourceData, meta interface{
 
 		if _, err := client.UpsertCatalogObject(&squaremodel.CatalogObject{
 			ID:           strPtr(*obj.ID),
-			Type:         strPtr("DISCOUNT"),
+			Type:         strPtr(DiscountObjectType),
 			Version:      obj.Version,
 			DiscountData: createCatalogDiscount(d),
 		}); err != nil {

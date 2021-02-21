@@ -1,8 +1,6 @@
 package square
 
 import (
-	"fmt"
-
 	"github.com/hashicorp/terraform/helper/schema"
 	squaremodel "github.com/jefflinse/square-connect/models"
 	"github.com/jefflinse/terraform-provider-square/square/client"
@@ -12,7 +10,7 @@ const (
 	// CatalogTaxNameMaxLength is the maximum length for a CatalogTax's name.
 	CatalogTaxNameMaxLength = 255
 
-	// TaxObjectType designates an object that describes a CatalogTax.
+	// TaxObjectType is the Square type for a catalog object describing a tax.
 	TaxObjectType = "TAX"
 
 	// TaxPhaseSubtotal indicates the fee is calculated based on the payment's subtotal.
@@ -62,11 +60,11 @@ func resourceSquareCatalogTax() *schema.Resource {
 func resourceSquareCatalogTaxCreate(d *schema.ResourceData, meta interface{}) error {
 	created, err := meta.(client.SquareAPI).UpsertCatalogObject(&squaremodel.CatalogObject{
 		ID:      newTempID(),
-		Type:    strPtr("TAX"),
+		Type:    strPtr(TaxObjectType),
 		TaxData: createCatalogTax(d),
 	})
 	if err != nil {
-		return fmt.Errorf("create catalog tax: %w", err)
+		return err
 	}
 
 	d.SetId(*created.ID)
@@ -103,7 +101,7 @@ func resourceSquareCatalogTaxUpdate(d *schema.ResourceData, meta interface{}) er
 
 		if _, err := client.UpsertCatalogObject(&squaremodel.CatalogObject{
 			ID:      strPtr(*obj.ID),
-			Type:    strPtr("TAX"),
+			Type:    strPtr(TaxObjectType),
 			Version: obj.Version,
 			TaxData: createCatalogTax(d),
 		}); err != nil {

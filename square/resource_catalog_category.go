@@ -1,12 +1,13 @@
 package square
 
 import (
-	"fmt"
-
 	"github.com/hashicorp/terraform/helper/schema"
 	squaremodel "github.com/jefflinse/square-connect/models"
 	"github.com/jefflinse/terraform-provider-square/square/client"
 )
+
+// CategoryObjectType is the Square type for a catalog object describing a category.
+const CategoryObjectType = "CATEGORY"
 
 func resourceSquareCatalogCategory() *schema.Resource {
 	return &schema.Resource{
@@ -26,11 +27,11 @@ func resourceSquareCatalogCategory() *schema.Resource {
 func resourceSquareCatalogCategoryCreate(d *schema.ResourceData, meta interface{}) error {
 	created, err := meta.(client.SquareAPI).UpsertCatalogObject(&squaremodel.CatalogObject{
 		ID:           newTempID(),
-		Type:         strPtr("CATEGORY"),
+		Type:         strPtr(CategoryObjectType),
 		CategoryData: createCatalogCategory(d),
 	})
 	if err != nil {
-		return fmt.Errorf("create catalog category: %w", err)
+		return err
 	}
 
 	d.SetId(*created.ID)
@@ -57,7 +58,7 @@ func resourceSquareCatalogCategoryUpdate(d *schema.ResourceData, meta interface{
 
 		if _, err := client.UpsertCatalogObject(&squaremodel.CatalogObject{
 			ID:           strPtr(*obj.ID),
-			Type:         strPtr("CATEGOORY"),
+			Type:         strPtr(CategoryObjectType),
 			Version:      obj.Version,
 			CategoryData: createCatalogCategory(d),
 		}); err != nil {

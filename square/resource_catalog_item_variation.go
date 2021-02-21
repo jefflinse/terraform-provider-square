@@ -1,15 +1,13 @@
 package square
 
 import (
-	"fmt"
-
 	"github.com/hashicorp/terraform/helper/schema"
 	squaremodel "github.com/jefflinse/square-connect/models"
 	"github.com/jefflinse/terraform-provider-square/square/client"
 )
 
 const (
-	// ItemVariationObjectType designates an object that describes a CatalogItemVariation.
+	// ItemVariationObjectType is the Square type for a catalog object describing an item variation.
 	ItemVariationObjectType = "ITEM_VARIATION"
 
 	// PricingTypeFixed designated a CatalogItemVariation with fixed pricing.
@@ -61,11 +59,11 @@ func resourceSquareCatalogItemVariation() *schema.Resource {
 func resourceSquareCatalogItemVariationCreate(d *schema.ResourceData, meta interface{}) error {
 	created, err := meta.(client.SquareAPI).UpsertCatalogObject(&squaremodel.CatalogObject{
 		ID:                newTempID(),
-		Type:              strPtr("ITEM_VARIATION"),
+		Type:              strPtr(ItemVariationObjectType),
 		ItemVariationData: createCatalogItemVariation(d),
 	})
 	if err != nil {
-		return fmt.Errorf("create catalog item: %w", err)
+		return err
 	}
 
 	d.SetId(*created.ID)
@@ -99,7 +97,7 @@ func resourceSquareCatalogItemVariationUpdate(d *schema.ResourceData, meta inter
 
 		if _, err := client.UpsertCatalogObject(&squaremodel.CatalogObject{
 			ID:                strPtr(*obj.ID),
-			Type:              strPtr("ITEM_VARIATION"),
+			Type:              strPtr(ItemVariationObjectType),
 			Version:           obj.Version,
 			ItemVariationData: createCatalogItemVariation(d),
 		}); err != nil {

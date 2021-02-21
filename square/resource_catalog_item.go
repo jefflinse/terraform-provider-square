@@ -8,8 +8,13 @@ import (
 	"github.com/jefflinse/terraform-provider-square/square/client"
 )
 
-// CatalogItemAbbreviationMaxLength is the maximum length for a CatalogItem's abbreviation.
-const CatalogItemAbbreviationMaxLength = 24
+const (
+	// CatalogItemAbbreviationMaxLength is the maximum length for a CatalogItem's abbreviation.
+	CatalogItemAbbreviationMaxLength = 24
+
+	// ItemObjectType is the Square type for a catalog object describing an item.
+	ItemObjectType = "ITEM"
+)
 
 func resourceSquareCatalogItem() *schema.Resource {
 	return &schema.Resource{
@@ -76,11 +81,11 @@ func resourceSquareCatalogItem() *schema.Resource {
 func resourceSquareCatalogItemCreate(d *schema.ResourceData, meta interface{}) error {
 	created, err := meta.(client.SquareAPI).UpsertCatalogObject(&squaremodel.CatalogObject{
 		ID:       newTempID(),
-		Type:     strPtr("ITEM"),
+		Type:     strPtr(ItemObjectType),
 		ItemData: createCatalogItem(d),
 	})
 	if err != nil {
-		return fmt.Errorf("create catalog item: %w", err)
+		return err
 	}
 
 	d.SetId(*created.ID)
@@ -117,7 +122,7 @@ func resourceSquareCatalogItemUpdate(d *schema.ResourceData, meta interface{}) e
 
 		if _, err := client.UpsertCatalogObject(&squaremodel.CatalogObject{
 			ID:       strPtr(*obj.ID),
-			Type:     strPtr("ITEM"),
+			Type:     strPtr(ItemObjectType),
 			Version:  obj.Version,
 			ItemData: createCatalogItem(d),
 		}); err != nil {
