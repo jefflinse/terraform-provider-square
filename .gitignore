@@ -19,3 +19,4 @@ terraform-provider-square
 .terraform*
 *.tfstate*
 auto.tfvars
+crash.log

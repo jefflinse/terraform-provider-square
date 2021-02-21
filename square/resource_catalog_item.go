@@ -146,7 +146,7 @@ func createCatalogItem(d *schema.ResourceData) *squaremodel.CatalogItem {
 		SkipModifierScreen:      d.Get("skip_modifier_screen").(bool),
 	}
 
-	taxIDs := d.Get("tax_ids").([]interface{})
+	taxIDs := d.Get("tax_ids").(*schema.Set).List()
 	item.TaxIds = []string{}
 	for _, tid := range taxIDs {
 		item.TaxIds = append(item.TaxIds, tid.(string))
