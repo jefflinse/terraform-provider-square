@@ -70,9 +70,8 @@ func resourceSquareCatalogDiscount() *schema.Resource {
 }
 
 func resourceSquareCatalogDiscountCreate(d *schema.ResourceData, meta interface{}) error {
-	discountID := newTempID()
 	created, err := meta.(*client.Client).UpsertCatalogObject(&squaremodel.CatalogObject{
-		ID:           &discountID,
+		ID:           newTempID(),
 		Type:         strPtr("DISCOUNT"),
 		DiscountData: createCatalogDiscount(d),
 	})

@@ -7,8 +7,8 @@ import (
 )
 
 // Generates a new temporary client ID for creating a new Square object.
-func newTempID() string {
-	return fmt.Sprint("#", uuid.New().String())
+func newTempID() *string {
+	return strPtr(fmt.Sprint("#", uuid.New().String()))
 }
 
 // Returns a pointer to the specified string value.

@@ -74,9 +74,8 @@ func resourceSquareCatalogItem() *schema.Resource {
 }
 
 func resourceSquareCatalogItemCreate(d *schema.ResourceData, meta interface{}) error {
-	itemID := newTempID()
 	created, err := meta.(*client.Client).UpsertCatalogObject(&squaremodel.CatalogObject{
-		ID:       &itemID,
+		ID:       newTempID(),
 		Type:     strPtr("ITEM"),
 		ItemData: createCatalogItem(d),
 	})

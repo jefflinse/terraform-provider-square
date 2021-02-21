@@ -7,11 +7,19 @@ import (
 	httptransport "github.com/go-openapi/runtime/client"
 	"github.com/google/uuid"
 	squareclient "github.com/jefflinse/square-connect/client"
+	squaremodel "github.com/jefflinse/square-connect/models"
 )
 
 const (
 	squareAPIHost = "connect.squareupsandbox.com"
 )
+
+// SquareAPI defines an interface for Square's REST API.
+type SquareAPI interface {
+	DeleteCatalogObject(*squaremodel.CatalogObject) (*squaremodel.CatalogObject, error)
+	RetrieveCatalogObject(id string) (*squaremodel.CatalogObject, error)
+	UpsertCatalogObject(*squaremodel.CatalogObject) (*squaremodel.CatalogObject, error)
+}
 
 // Client is the Square API client.
 type Client struct {

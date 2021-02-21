@@ -59,9 +59,8 @@ func resourceSquareCatalogItemVariation() *schema.Resource {
 }
 
 func resourceSquareCatalogItemVariationCreate(d *schema.ResourceData, meta interface{}) error {
-	itemID := newTempID()
 	created, err := meta.(*client.Client).UpsertCatalogObject(&squaremodel.CatalogObject{
-		ID:                &itemID,
+		ID:                newTempID(),
 		Type:              strPtr("ITEM_VARIATION"),
 		ItemVariationData: createCatalogItemVariation(d),
 	})

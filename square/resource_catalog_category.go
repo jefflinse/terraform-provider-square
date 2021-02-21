@@ -24,9 +24,8 @@ func resourceSquareCatalogCategory() *schema.Resource {
 }
 
 func resourceSquareCatalogCategoryCreate(d *schema.ResourceData, meta interface{}) error {
-	categoryID := newTempID()
 	created, err := meta.(*client.Client).UpsertCatalogObject(&squaremodel.CatalogObject{
-		ID:           &categoryID,
+		ID:           newTempID(),
 		Type:         strPtr("CATEGORY"),
 		CategoryData: createCatalogCategory(d),
 	})

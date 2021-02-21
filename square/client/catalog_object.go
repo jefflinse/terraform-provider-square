@@ -32,12 +32,12 @@ func (c *Client) UpsertCatalogObject(obj *squaremodel.CatalogObject) (*squaremod
 }
 
 // DeleteCatalogObject deletes a Square CatalogObject with the specified ID.
-func (c *Client) DeleteCatalogObject(id string) (string, error) {
+func (c *Client) DeleteCatalogObject(id string) ([]string, error) {
 	params := catalogAPI.NewDeleteCatalogObjectParams().WithObjectID(id)
 	resp, err := c.square.Catalog.DeleteCatalogObject(params, c.auth())
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return resp.Payload.DeletedObjectIds[0], nil
+	return resp.Payload.DeletedObjectIds, nil
 }

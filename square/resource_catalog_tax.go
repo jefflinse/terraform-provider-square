@@ -60,9 +60,8 @@ func resourceSquareCatalogTax() *schema.Resource {
 }
 
 func resourceSquareCatalogTaxCreate(d *schema.ResourceData, meta interface{}) error {
-	taxID := newTempID()
 	created, err := meta.(*client.Client).UpsertCatalogObject(&squaremodel.CatalogObject{
-		ID:      &taxID,
+		ID:      newTempID(),
 		Type:    strPtr("TAX"),
 		TaxData: createCatalogTax(d),
 	})
