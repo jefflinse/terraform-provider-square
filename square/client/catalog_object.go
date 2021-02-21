@@ -1,11 +1,12 @@
-package square
+package client
 
 import (
 	catalogAPI "github.com/jefflinse/square-connect/client/catalog"
 	squaremodel "github.com/jefflinse/square-connect/models"
 )
 
-func (c *Client) retrieveCatalogObject(id string) (*squaremodel.CatalogObject, error) {
+// RetrieveCatalogObject retrieves a Square CatalogObject.
+func (c *Client) RetrieveCatalogObject(id string) (*squaremodel.CatalogObject, error) {
 	params := catalogAPI.NewRetrieveCatalogObjectParams().WithObjectID(id)
 	resp, err := c.square.Catalog.RetrieveCatalogObject(params, c.auth())
 	if err != nil {
@@ -15,7 +16,8 @@ func (c *Client) retrieveCatalogObject(id string) (*squaremodel.CatalogObject, e
 	return resp.Payload.Object, nil
 }
 
-func (c *Client) upsertCatalogObject(obj *squaremodel.CatalogObject) (*squaremodel.CatalogObject, error) {
+// UpsertCatalogObject creates or updates a Square CatalogObject.
+func (c *Client) UpsertCatalogObject(obj *squaremodel.CatalogObject) (*squaremodel.CatalogObject, error) {
 	params := catalogAPI.NewUpsertCatalogObjectParams().WithBody(&squaremodel.UpsertCatalogObjectRequest{
 		IdempotencyKey: newIdempotencyKey(),
 		Object:         obj,
@@ -29,7 +31,7 @@ func (c *Client) upsertCatalogObject(obj *squaremodel.CatalogObject) (*squaremod
 	return resp.Payload.CatalogObject, nil
 }
 
-// DeleteCatalogObject deletes a catalog object with the specified ID.
+// DeleteCatalogObject deletes a Square CatalogObject with the specified ID.
 func (c *Client) DeleteCatalogObject(id string) (string, error) {
 	params := catalogAPI.NewDeleteCatalogObjectParams().WithObjectID(id)
 	resp, err := c.square.Catalog.DeleteCatalogObject(params, c.auth())

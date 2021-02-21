@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/schema"
 	squaremodel "github.com/jefflinse/square-connect/models"
+	"github.com/jefflinse/terraform-provider-square/square/client"
 )
 
 func resourceSquareCatalogCategory() *schema.Resource {
@@ -24,7 +25,7 @@ func resourceSquareCatalogCategory() *schema.Resource {
 
 func resourceSquareCatalogCategoryCreate(d *schema.ResourceData, meta interface{}) error {
 	categoryID := newTempID()
-	created, err := meta.(*Client).upsertCatalogObject(&squaremodel.CatalogObject{
+	created, err := meta.(*client.Client).UpsertCatalogObject(&squaremodel.CatalogObject{
 		ID:           &categoryID,
 		Type:         strPtr("CATEGORY"),
 		CategoryData: createCatalogCategory(d),
@@ -39,7 +40,7 @@ func resourceSquareCatalogCategoryCreate(d *schema.ResourceData, meta interface{
 }
 
 func resourceSquareCatalogCategoryRead(d *schema.ResourceData, meta interface{}) error {
-	obj, err := meta.(*Client).retrieveCatalogObject(d.Id())
+	obj, err := meta.(*client.Client).RetrieveCatalogObject(d.Id())
 	if err != nil {
 		return err
 	}
@@ -49,13 +50,13 @@ func resourceSquareCatalogCategoryRead(d *schema.ResourceData, meta interface{})
 
 func resourceSquareCatalogCategoryUpdate(d *schema.ResourceData, meta interface{}) error {
 	if d.HasChange("name") {
-		client := meta.(*Client)
-		obj, err := client.retrieveCatalogObject(d.Id())
+		client := meta.(*client.Client)
+		obj, err := client.RetrieveCatalogObject(d.Id())
 		if err != nil {
 			return err
 		}
 
-		if _, err := client.upsertCatalogObject(&squaremodel.CatalogObject{
+		if _, err := client.UpsertCatalogObject(&squaremodel.CatalogObject{
 			ID:           strPtr(*obj.ID),
 			Type:         strPtr("CATEGOORY"),
 			Version:      obj.Version,
@@ -69,7 +70,7 @@ func resourceSquareCatalogCategoryUpdate(d *schema.ResourceData, meta interface{
 }
 
 func resourceSquareCatalogCategoryDelete(d *schema.ResourceData, meta interface{}) error {
-	_, err := meta.(*Client).DeleteCatalogObject(d.Id())
+	_, err := meta.(*client.Client).DeleteCatalogObject(d.Id())
 	return err
 }
 

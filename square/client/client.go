@@ -1,10 +1,11 @@
-package square
+package client
 
 import (
 	"os"
 
 	runtime "github.com/go-openapi/runtime"
 	httptransport "github.com/go-openapi/runtime/client"
+	"github.com/google/uuid"
 	squareclient "github.com/jefflinse/square-connect/client"
 )
 
@@ -32,4 +33,10 @@ func NewClient(token string) *Client {
 		},
 		square: squareclient.Default,
 	}
+}
+
+// Generates a new idempotency key for a Square API request.
+func newIdempotencyKey() *string {
+	key := uuid.New().String()
+	return &key
 }

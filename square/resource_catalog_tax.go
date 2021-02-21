@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/schema"
 	squaremodel "github.com/jefflinse/square-connect/models"
+	"github.com/jefflinse/terraform-provider-square/square/client"
 )
 
 const (
@@ -60,7 +61,7 @@ func resourceSquareCatalogTax() *schema.Resource {
 
 func resourceSquareCatalogTaxCreate(d *schema.ResourceData, meta interface{}) error {
 	taxID := newTempID()
-	created, err := meta.(*Client).upsertCatalogObject(&squaremodel.CatalogObject{
+	created, err := meta.(*client.Client).UpsertCatalogObject(&squaremodel.CatalogObject{
 		ID:      &taxID,
 		Type:    strPtr("TAX"),
 		TaxData: createCatalogTax(d),
@@ -75,7 +76,7 @@ func resourceSquareCatalogTaxCreate(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourceSquareCatalogTaxRead(d *schema.ResourceData, meta interface{}) error {
-	obj, err := meta.(*Client).retrieveCatalogObject(d.Id())
+	obj, err := meta.(*client.Client).RetrieveCatalogObject(d.Id())
 	if err != nil {
 		return err
 	}
@@ -95,13 +96,13 @@ func resourceSquareCatalogTaxUpdate(d *schema.ResourceData, meta interface{}) er
 		d.HasChange("skip_modifier_screen") ||
 		d.HasChange("tax_ids") {
 
-		client := meta.(*Client)
-		obj, err := client.retrieveCatalogObject(d.Id())
+		client := meta.(*client.Client)
+		obj, err := client.RetrieveCatalogObject(d.Id())
 		if err != nil {
 			return err
 		}
 
-		if _, err := client.upsertCatalogObject(&squaremodel.CatalogObject{
+		if _, err := client.UpsertCatalogObject(&squaremodel.CatalogObject{
 			ID:      strPtr(*obj.ID),
 			Type:    strPtr("TAX"),
 			Version: obj.Version,
@@ -115,7 +116,7 @@ func resourceSquareCatalogTaxUpdate(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourceSquareCatalogTaxDelete(d *schema.ResourceData, meta interface{}) error {
-	_, err := meta.(*Client).DeleteCatalogObject(d.Id())
+	_, err := meta.(*client.Client).DeleteCatalogObject(d.Id())
 	return err
 }
 

@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/schema"
 	squaremodel "github.com/jefflinse/square-connect/models"
+	"github.com/jefflinse/terraform-provider-square/square/client"
 )
 
 const (
@@ -59,7 +60,7 @@ func resourceSquareCatalogItemVariation() *schema.Resource {
 
 func resourceSquareCatalogItemVariationCreate(d *schema.ResourceData, meta interface{}) error {
 	itemID := newTempID()
-	created, err := meta.(*Client).upsertCatalogObject(&squaremodel.CatalogObject{
+	created, err := meta.(*client.Client).UpsertCatalogObject(&squaremodel.CatalogObject{
 		ID:                &itemID,
 		Type:              strPtr("ITEM_VARIATION"),
 		ItemVariationData: createCatalogItemVariation(d),
@@ -74,7 +75,7 @@ func resourceSquareCatalogItemVariationCreate(d *schema.ResourceData, meta inter
 }
 
 func resourceSquareCatalogItemVariationRead(d *schema.ResourceData, meta interface{}) error {
-	obj, err := meta.(*Client).retrieveCatalogObject(d.Id())
+	obj, err := meta.(*client.Client).RetrieveCatalogObject(d.Id())
 	if err != nil {
 		return err
 	}
@@ -91,13 +92,13 @@ func resourceSquareCatalogItemVariationUpdate(d *schema.ResourceData, meta inter
 		d.HasChange("sku") ||
 		d.HasChange("upc") {
 
-		client := meta.(*Client)
-		obj, err := client.retrieveCatalogObject(d.Id())
+		client := meta.(*client.Client)
+		obj, err := client.RetrieveCatalogObject(d.Id())
 		if err != nil {
 			return err
 		}
 
-		if _, err := client.upsertCatalogObject(&squaremodel.CatalogObject{
+		if _, err := client.UpsertCatalogObject(&squaremodel.CatalogObject{
 			ID:                strPtr(*obj.ID),
 			Type:              strPtr("ITEM_VARIATION"),
 			Version:           obj.Version,
@@ -111,7 +112,7 @@ func resourceSquareCatalogItemVariationUpdate(d *schema.ResourceData, meta inter
 }
 
 func resourceSquareCatalogItemVariationDelete(d *schema.ResourceData, meta interface{}) error {
-	_, err := meta.(*Client).DeleteCatalogObject(d.Id())
+	_, err := meta.(*client.Client).DeleteCatalogObject(d.Id())
 	return err
 }
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/jefflinse/terraform-provider-square/square/client"
 )
 
 const squarerAPIAccessTokenEnvVar = "SQUARE_API_ACCESS_TOKEN"
@@ -31,6 +32,6 @@ func configureFn() func(*schema.ResourceData) (interface{}, error) {
 			return nil, fmt.Errorf("%s not set", squarerAPIAccessTokenEnvVar)
 		}
 
-		return NewClient(token), nil
+		return client.NewClient(token), nil
 	}
 }
